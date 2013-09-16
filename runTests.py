@@ -98,10 +98,10 @@ class TestPipe():
                     stdout=subprocess.PIPE).stdout.readline().rstrip()
 
         # Setup data output formatters
-        self.header  = "#       /"+"="*29+" Test Stats "+"="*28+"\ /"+"="*29+" Run Stats "+"="*29+"\\\n"
-        self.header += "# pairs         avg         var         std         ste         c95         c99"
-        self.header += "         avg         var         std         ste         c95         c99"
-        self.hrule   =  "#"+"="*150
+        self.header  = "#       /"+"="*30+" Test Stats "+"="*28+"\ /"+"="*30+" Run Stats "+"="*29+"\\\n"
+        self.header += "# pairs          avg         var         std         ste         c95         c99"
+        self.header += "          avg         var         std         ste         c95         c99"
+        self.hrule   =  "#"+"="*152
 
     def __del__(self):
         self.fdata.close()
@@ -169,13 +169,13 @@ class TestPipe():
                 rt_stats.add_sample(rtime)
 
             (count, avg, var, std, ste, c95, c99) = tt_stats.get_stats()
-            stats ="%7d %11.9f %11.9f %11.9f %11.9f %11.9f %11.9f" % \
+            stats ="%7d %012.9f %11.9f %11.9f %11.9f %11.9f %11.9f" % \
                     (count/self.runs, avg, var, std, ste, c95, c99)
             print stats,
             self.fdata.write(stats)
 
             (count, avg, var, std, ste, c95, c99) = rt_stats.get_stats()
-            stats ="%11.9f %11.9f %11.9f %11.9f %11.9f %11.9f" % \
+            stats ="%012.9f %11.9f %11.9f %11.9f %11.9f %11.9f" % \
                     (avg, var, std, ste, c95, c99)
             print stats
             self.fdata.write(stats+"\n")
