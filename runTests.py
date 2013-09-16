@@ -16,6 +16,9 @@ import math
 import time
 import multiprocessing
 import logging
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gs
 from datetime import datetime
 
 # Internal configuration flags
@@ -184,6 +187,55 @@ class TestPipe():
             print stats
             self.fdata.write(stats+"\n")
 
+
+
+    def plot(self, datafile):
+        if (verbose):
+            logging.debug("Parsing " + datafile + "...");
+
+        data = np.loadtxt(datafile)
+
+        # Setup graph geometry, axis and legend
+
+        logging.debug("Plotting...")
+
+        # Plot for Task and Run Completon time
+        fig = plt.figure()
+
+        grids = gs.GridSpec(2,1,height_ratios=[3,1])
+        plt_t = fig.add_subplot(grids[0])
+
+        plt_u = fig.add_subplot(grids[1])
+        plt_u.set_ybound(0,1)
+
+
+        # Compute fairness index and test-/run-time
+        ui = []
+        xi = [c[0]  for c in data]
+        tt = [c[1]  for c in data]
+        te = [c[6]  for c in data]
+        rt = [c[7]  for c in data]
+        re = [c[12] for c in data]
+        for x in range(len(data)):
+            ui.append(1 - (tt[x] / rt[x]))
+
+
+        # Add Test and Run Completion times
+        time_plots = [
+                plt_t.errorbar(xi, tt, te),
+                plt_t.errorbar(xi, rt, re)]
+        plt_t.legend(time_plots, ["Task time", "Run time"], loc=4, prop={'size':11})
+        plt_t.set_ylabel("Time [s]")
+        plt_t.set_title("Sched PIPE Test Analysis")
+
+        index_plots = [
+                plt_u.bar(xi, ui)]
+        plt_u.legend(index_plots, ["Unfairness index"], loc=1, prop={'size':11})
+        plt_u.set_xlabel("Number of task paris")
+        plt_u.set_ylabel("Index")
+        plt_u.axis(ymin=0, ymax=1)
+
+        plt.show()
 
 
 def setup_cpufreq(governor="ondemand"):
