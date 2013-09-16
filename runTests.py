@@ -15,7 +15,11 @@ import subprocess
 import math
 import time
 import multiprocessing
+import logging
 from datetime import datetime
+
+# Internal configuration flags
+verbose = 0
 
 if os.geteuid() != 0:
     print("#\n# This scripts requires ROOT permission to properly setup CPUFreq during tests.")
@@ -132,7 +136,7 @@ class TestPipe():
     def run(self):
         """Run the PIPE Test"""
 
-        print "Output on " + self.fname
+        logging.debug("Output on " + self.fname);
         self.dump_test_header()
 
 
@@ -194,7 +198,7 @@ def run_all_tests():
 
     setup_cpufreq("performance")
 
-    print "Running all tests..."
+    logging.debug("Running all tests...")
 
     test_pipe = TestPipe(32,1000000,10)
     test_pipe.run()
@@ -215,15 +219,17 @@ class Usage(Exception):
 
 def process(arg):
     """Command Line Arguments Processing"""
-    print "Processing argument ", arg
+    logging.debug("Processing argument " + arg)
 
 
 def main(argv=None):
+    global verbose
+
     if argv is None:
         argv = sys.argv
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "h", ["help"])
+            opts, args = getopt.getopt(argv[1:], "hv", ["help", "verbose"])
         except getopt.error, msg:
             raise Usage(msg)
         # process options
@@ -231,6 +237,9 @@ def main(argv=None):
             if o in ("-h", "--help"):
                 print __doc__
                 sys.exit(0)
+            if o in ("-v", "--verbose"):
+                verbose = 1
+                continue
         # process arguments
         for arg in args:
             process(arg) # process() is defined elsewhere
@@ -239,6 +248,10 @@ def main(argv=None):
         print >>sys.stderr, err.msg
         print >>sys.stderr, "for help use --help"
         return 2
+
+    # Setup Logging
+    if (verbose):
+        logging.basicConfig(format="%(asctime)s %(message)s", level=logging.DEBUG)
 
     return run_all_tests()
 
