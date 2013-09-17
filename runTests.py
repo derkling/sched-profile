@@ -85,7 +85,9 @@ class Stats():
         return (self.scount, self.savg, self.svar, self.sstd, self.sste, self.sc95, self.sc99)
 
 class TestPipe():
-    def __init__(self, tasks=64, loops=1000000, runs=30):
+    def __init__(self, tasks=-1, loops=1000000, runs=30):
+        if (tasks == -1):
+            tasks = 4 * cpuCores
         """Setup a new PIPE Test"""
         self.tasks = tasks
         self.loops = loops
@@ -252,7 +254,7 @@ def run_all_tests():
 
     logging.debug("Running all tests...")
 
-    test_pipe = TestPipe(32,1000000,10)
+    test_pipe = TestPipe()
     test_pipe.run()
 
 
