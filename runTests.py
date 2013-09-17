@@ -190,6 +190,9 @@ class TestPipe():
             self.fdata.write(stats+"\n")
 
 
+        logging.info("Sched PIPE data: " + self.fname)
+        return self.fname
+
 
     def plot(self, datafile):
         if (verbose):
@@ -255,7 +258,9 @@ def run_all_tests():
     logging.debug("Running all tests...")
 
     test_pipe = TestPipe()
-    test_pipe.run()
+    fname = test_pipe.run()
+    test_pipe.plot(fname);
+
 
 
     setup_cpufreq(cpuGovernor)
