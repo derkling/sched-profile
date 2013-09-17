@@ -306,7 +306,7 @@ def main(argv=None):
         for o, a in opts:
             if o in ("-h", "--help"):
                 print __doc__
-                sys.exit(0)
+                return 0
             if o in ("-s", "--show"):
                 show_plot = 1
                 continue
