@@ -23,6 +23,7 @@ from datetime import datetime
 
 # Internal configuration flags
 verbose = 0
+show_plot = 0
 
 if os.geteuid() != 0:
     print("#\n# This scripts requires ROOT permission to properly setup CPUFreq during tests.")
@@ -240,7 +241,16 @@ class TestPipe():
         plt_u.set_ylabel("Index")
         plt_u.axis(ymin=0, ymax=1)
 
-        plt.show()
+        if show_plot:
+            plt.show()
+        else:
+            graph_name = datafile.replace(".dat", ".pdf")
+            logging.info("Plotting "+graph_name+"...")
+            plt.savefig(
+                graph_name,
+                papertype = 'a3',
+                format = 'pdf'
+            )
 
 
 def setup_cpufreq(governor="ondemand"):
@@ -283,12 +293,13 @@ def process(arg):
 
 def main(argv=None):
     global verbose
+    global show_plot
 
     if argv is None:
         argv = sys.argv
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "hv", ["help", "verbose"])
+            opts, args = getopt.getopt(argv[1:], "hsv", ["help", "show", "verbose"])
         except getopt.error, msg:
             raise Usage(msg)
         # process options
@@ -296,6 +307,9 @@ def main(argv=None):
             if o in ("-h", "--help"):
                 print __doc__
                 sys.exit(0)
+            if o in ("-s", "--show"):
+                show_plot = 1
+                continue
             if o in ("-v", "--verbose"):
                 verbose = 1
                 continue
