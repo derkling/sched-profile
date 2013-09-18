@@ -14,6 +14,7 @@ import tempfile
 import subprocess
 import math
 import time
+import platform
 import multiprocessing
 import logging
 import numpy as np
@@ -34,6 +35,16 @@ cpuCores = multiprocessing.cpu_count()
 cpuGovernor = subprocess.Popen(["cat",
     "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"],
     stdout=subprocess.PIPE).stdout.readline().rstrip()
+# Get CPUs description
+with open('/proc/cpuinfo') as f:
+    for line in f:
+        if line.strip():
+            if line.rstrip('\n').startswith('model name'):
+                model_name = line.rstrip('\n').split(':')[1]
+                break
+cpuSystem = str(cpuCores) + "x" + model_name
+platform = platform.uname()
+pltVersion = platform[0] + " v" + platform[2] + ", " + platform[4]
 
 class Stats():
     def __init__(self):
@@ -207,9 +218,13 @@ class TestPipe():
 
         # Plot for Task and Run Completon time
         fig = plt.figure()
+        fig.suptitle("Sched PIPE Test Analysis", fontsize=18)
+        fig.suptitle(cpuSystem, fontsize=12, y=.94)
+        fig.suptitle(pltVersion, fontsize=12, y=.91)
 
         grids = gs.GridSpec(2,1,height_ratios=[3,1])
         plt_t = fig.add_subplot(grids[0])
+        fig.subplots_adjust(top=.87)
 
         plt_u = fig.add_subplot(grids[1])
         plt_u.set_ybound(0,1)
@@ -232,7 +247,6 @@ class TestPipe():
                 plt_t.errorbar(xi, rt, re)]
         plt_t.legend(time_plots, ["Task time", "Run time"], loc=4, prop={'size':11})
         plt_t.set_ylabel("Time [s]")
-        plt_t.set_title("Sched PIPE Test Analysis")
 
         index_plots = [
                 plt_u.bar(xi, ui)]
