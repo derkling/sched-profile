@@ -1,0 +1,15 @@
+
+# Setup CPUFreq Governor to performance
+./setcpufreq.sh p
+
+# Mount CGroups
+[ -f /sys/fs/cgroup/tasks ] || mount -t cgroup none /sys/fs/cgroup
+
+# Setup a testing SandBox
+./sandbox.sh start
+
+# NOTE: the overall RT quota cannot overxeed the (hardcoded) 95% limit on the root TG
+#       this 95% could be partitioned into the HOST and SBox partitions
+echo 400000 > /sys/fs/cgroup/host/cpu.rt_runtime_us
+echo 400000 > /sys/fs/cgroup/sbox/cpu.rt_runtime_us
+
