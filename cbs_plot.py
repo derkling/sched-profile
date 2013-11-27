@@ -162,9 +162,9 @@ metrics = {
  'Tb_error':  [ 'Burst error',          '',                           8,      3],
  'Tb_next':   [ 'Burst next',           '',                           9,      4],
  'Tb_timer':  [ 'Burst assigned',       '',                          10,      5],
- 'Tb':        [ 'Burst measured',       '',                          11,      6],
- 'Tb_start':  [ 'Burst time start',     '',                          12,      7],
- 'Tb_stop':   [ 'Burst time (exp) end', '',                          13,      8],
+ 'Tb':        [ 'Burst measured',       '',                          12,      6],
+ 'Tb_start':  [ 'Burst time start',     '',                          13,      7],
+ 'Tb_stop':   [ 'Burst time (exp) end', '',                          14,      8],
 # 'Tb_reinit': [ 'Burst reinit',       '',                            6,      2],
 }
 
