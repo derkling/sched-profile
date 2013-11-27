@@ -1,0 +1,15 @@
+
+.:: Usage Notes
+1. Get root on a console
+2. Source the init_env script to setup CPUFreq and a testing SandBox
+3. Start the monitor tool and use the generated console to run your tests
+4. Ensure the console is running in the root CGroup partition
+   i.e. cat /proc/self/cgroup sould return "/" as cgroup
+   To move the console in the root group:
+   echo $$ > /sys/fs/cgroup/tasks
+5. Start each test as a RT task at prio level 12, e.g.
+   chrt -f 12 ./trace_compare.sh
+
+NOTE: all tests must be started by the monitor console, which is configure to run as a RT task,
+otherwise you could experience poor system responsiveness
+
