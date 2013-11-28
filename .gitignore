@@ -1,3 +1,7 @@
 *~
 *.swp
 *.dat
+*.pdf
+results/
+parse_bursts.awk
+parse_rounds.awk
