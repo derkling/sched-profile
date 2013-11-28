@@ -16,6 +16,8 @@ d) GOV='ondemand'
 ;;
 p) GOV='performance'
 ;;
+s) GOV='powersave'
+;;
 *) usage && exit 1
 ;;
 esac
