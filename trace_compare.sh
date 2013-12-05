@@ -315,12 +315,12 @@ log_title1 "Trace Compare"
 
 trace_multi
 
-report_sched_latency cbs
-report_sched_time cbs
+#report_sched_latency cb
+#report_sched_time cbs
 
 if [[ "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
-  report_sched_latency fair
-  report_sched_time fair
+  #report_sched_latency fair
+  #report_sched_time fair
 fi
 
 sleep 1
