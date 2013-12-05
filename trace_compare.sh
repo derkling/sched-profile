@@ -171,6 +171,17 @@ trace_multi() {
   trace_stop
   trace-cmd extract &>/dev/null
   mv trace.dat cbs_trace_$TAG.dat
+  cat > cbs_trace_$TAG.txt <<EOF
+################################################################################
+# TAG:
+$TAG
+################################################################################
+# BENCHMARK:
+$BENCH
+################################################################################
+# COMMAND:
+$CMD
+EOF
 
   trace_reset
 
@@ -198,6 +209,17 @@ trace_multi() {
     trace_stop
     trace-cmd extract &>/dev/null
     mv trace.dat fair_trace_$TAG.dat
+  cat > fair_trace_$TAG.txt <<EOF
+################################################################################
+# TAG:
+$TAG
+################################################################################
+# BENCHMARK:
+$BENCH
+################################################################################
+# COMMAND:
+$CMD
+EOF
     trace_reset
 
   fi
