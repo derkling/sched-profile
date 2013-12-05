@@ -10,6 +10,7 @@ BRSFILE=${DATFILE/.dat/_bursts.dat}
 LTSFILE=${DATFILE/.dat/_latencies.dat}
 EVTFILE=${DATFILE/.dat/_events.dat}
 
+################################################################################
 ### Round parsing
 cat > parse_rounds.awk <<EOF
 #!/usr/bin/awk -f
@@ -30,6 +31,7 @@ trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_rounds.awk \
 	> $RNDFILE
 
+################################################################################
 ### Round parsing
 cat > parse_bursts.awk <<EOF
 #!/usr/bin/awk -f
@@ -50,6 +52,7 @@ trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_bursts.awk \
 	> $BRSFILE
 
+################################################################################
 ### Latency parsing
 cat > parse_latencies.awk <<EOF
 #!/usr/bin/awk -f
@@ -70,6 +73,8 @@ trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]=' ' ' | ./parse_latencies.awk \
 	> $LTSFILE
 
+################################################################################
+### Events dumping
 trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null \
 	> $EVTFILE
 
