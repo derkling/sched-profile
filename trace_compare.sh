@@ -4,6 +4,9 @@
 ### Benchmark configuration
 ################################################################################
 
+# The tag to append to the output data filenames
+TAG=${TAG:-"NONE"}
+
 # Numer of instences to run concurrently
 CINTS=${CINTS:-1}
 
@@ -144,11 +147,11 @@ trace_reset() {
 ################################################################################
 
 trace_multi() {
-  log_info "[CONF] Running tests with [$CINTS] instances..."
+  log_info "[CONF] Running [$TAG] tests with [$CINTS] instances..."
 
   trace_setup
 
-  log_info "[TEST] Running on CBS scheduler..."
+  log_info "[TEST] Running [$TAG] on CBS scheduler..."
   pushd $TESTD
   JOBS=''
   CMD="$CHRT -f 10
@@ -167,7 +170,7 @@ trace_multi() {
   wait $JOBS
   trace_stop
   trace-cmd extract &>/dev/null
-  mv trace.dat cbs_trace.dat
+  mv trace.dat cbs_trace_$TAG.dat
 
   trace_reset
 
@@ -175,7 +178,7 @@ trace_multi() {
 
     trace_setup
 
-    log_info "[TEST] Running on FAIR scheduler..."
+    log_info "[TEST] Running [$TAG] on FAIR scheduler..."
     pushd $TESTD
     JOBS=''
     CMD="$CHRT -f 10
@@ -194,8 +197,7 @@ trace_multi() {
     wait $JOBS
     trace_stop
     trace-cmd extract &>/dev/null
-    mv trace.dat fair_trace.dat
-
+    mv trace.dat fair_trace_$TAG.dat
     trace_reset
 
   fi
@@ -212,11 +214,11 @@ report_sched_latency() {
     return 1
   fi
   log_info "[DATA] Sched Latency ${1^^*}"
-  trace-cmd report -i $1_trace.dat \
+  trace-cmd report -i $1_trace_$TAG.dat \
     --cpu 3 -w -F "sched_switch, sched_wakeup.*" \
     &>/dev/null | tail -n4
-  kernelshark $1_trace.dat &
-  $TERM -e "./trace_pager.sh -i $1_trace.dat --cpu=3" &
+  kernelshark $1_trace_$TAG.dat &
+  $TERM -e "./trace_pager.sh -i $1_trace_$TAG.dat --cpu=3" &
 }
 
 report_sched_time() {
@@ -224,11 +226,11 @@ report_sched_time() {
     return 1
   fi
   log_info "[DATA] Sched Time ${1^^*}"
-  rm -f $1_time_sched.dat 2>/dev/null
-  trace-cmd report -i $1_trace.dat \
+  rm -f $1_time_sched_$TAG.dat 2>/dev/null
+  trace-cmd report -i $1_trace_$TAG.dat \
     --cpu 3 &>/dev/null | \
     tr -d ':' | \
-    awk -v FILE=$1_time_sched.dat '
+    awk -v FILE=$1_time_sched_$TAG.dat '
           BEGIN {
             t0=0
             tmin=999999
@@ -254,7 +256,7 @@ report_sched_time() {
             if (n!=0)
               print n " " tmin " " tmax " " sum/n "[us]"
           }'
-  if [ ! -f $1_trace_sched.dat ]; then
+  if [ ! -f $1_trace_sched_$TAG.dat ]; then
     echo "Empty trace file."
     return
   fi
@@ -266,7 +268,7 @@ report_sched_time() {
     set output '$1_time_sched.pdf';
     set yrange [5:200];
     set logscale y;
-    plot '$1_time_sched.dat';"
+    plot '$1_time_sched_$TAG.dat';"
 }
 
 
