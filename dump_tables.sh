@@ -3,6 +3,12 @@
 SCHED=${1:-"cbs"}
 CPUS=${2:-"3"}
 
+DATFILE="${SCHED}_trace_*.dat"
+DATFILE=`echo $DATFILE`
+RNDFILE=${DATFILE/.dat/_rounds.dat}
+BRSFILE=${DATFILE/.dat/_bursts.dat}
+EVTFILE=${DATFILE/.dat/_events.dat}
+
 ### Round parsing
 cat > parse_rounds.awk <<EOF
 #!/usr/bin/awk -f
@@ -19,10 +25,9 @@ BEGIN {
 EOF
 chmod a+x parse_rounds.awk
 
-trace-cmd report --cpu $CPUS ${SCHED}_trace.dat 2>/dev/null | \
+trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_rounds.awk \
-	> ${SCHED}_rounds.dat
-
+	> $RNDFILE
 
 ### Round parsing
 cat > parse_bursts.awk <<EOF
@@ -40,11 +45,10 @@ BEGIN {
 EOF
 chmod a+x parse_bursts.awk
 
-trace-cmd report --cpu $CPUS ${SCHED}_trace.dat 2>/dev/null | \
+trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_bursts.awk \
-	> ${SCHED}_bursts.dat
+	> $BRSFILE
 
-trace-cmd report --cpu $CPUS ${SCHED}_trace.dat 2>/dev/null \
-	> ${SCHED}_events.dat
-
+trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null \
+	> $EVTFILE
 
