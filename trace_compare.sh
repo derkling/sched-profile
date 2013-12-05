@@ -306,6 +306,23 @@ EOF
 chmod a+x trace_pager.sh
 fi
 
+if [ ! -f decompressor ]; then
+cat > decompressor <<EOF
+#!/bin/bash
+DESTDIR=\`echo \$0 | sed 's/.bsx//'\`
+ARCHIVE=\`awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' \$0\`
+mkdir \$DESTDIR || exit 1
+tail -n+\$ARCHIVE \$0 | tar xj -C \$DESTDIR
+cd \$DESTDIR
+./dump_tables.sh
+./plot_tables.py
+cd ..
+xdg-open \$DESTDIR
+exit 0
+__ARCHIVE_BELOW__
+EOF
+fi
+
 ################################################################################
 ### Main
 ################################################################################
@@ -317,10 +334,27 @@ trace_multi
 
 #report_sched_latency cb
 #report_sched_time cbs
+tar cjf cbs_trace_$TAG.tar.bz2 \
+	cbs_trace_$TAG.txt \
+	cbs_trace_$TAG.log \
+	cbs_trace_$TAG.dat \
+	dump_tables.sh \
+	plot_tables.py
+
+cat decompressor cbs_trace_$TAG.tar.bz2 > results_cbs_$TAG.bsx
+chmod a+x results_cbs_$TAG.bsx
 
 if [[ "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
   #report_sched_latency fair
   #report_sched_time fair
+  tar cjf fair_trace_$TAG.tar.bz2 \
+	  fair_trace_$TAG.txt \
+	  fair_trace_$TAG.log \
+	  fair_trace_$TAG.dat \
+	  dump_tables.sh \
+	  plot_tables.py
+  cat decompressor fair_trace_$TAG.tar.bz2 > results_fair_$TAG.bsx
+  chmod a+x results_fair_$TAG.bsx
 fi
 
 sleep 1
