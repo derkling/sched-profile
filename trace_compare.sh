@@ -1,8 +1,27 @@
 #!/bin/bash
 
+################################################################################
+### Benchmark configuration
+################################################################################
+
 # Numer of instences to run concurrently
-CINTS=${1:-1}
+CINTS=${CINTS:-1}
+
+# The benchmark command to execute
 BENCH=${BENCH:-"perf bench --format=simple sched pipe -l1000000"}
+
+# The FTrace plugin to use (by default just events)
+TRACER=${TRACER:-""}
+#TRACER=${TRACER:-function_graph}
+
+# The FTrace events to trace
+EVENTS=${EVENTS:-"sched:sched_switch sched:sched_process_fork sched:sched_process_latency sched_cbs:*"}
+
+
+################################################################################
+### Do not touch under this line
+################################################################################
+
 TESTD=${TESTD:-`pwd`}
 CHRT=${CHRT:-/home/derkling/bin/chrt}
 TERM=${TERM:-gnome-terminal}
@@ -63,8 +82,6 @@ log_warn()
 
 TRACING=${TRACING:-/sys/kernel/debug/tracing}
 FILTER=${FILTER:-tracepoints_sched_compare.txt}
-#TRACER=${TRACER:-function_graph}
-EVENTS=${EVENTS:-"sched:sched_switch sched:sched_process_fork sched_cbs:*"}
 OPTIONS=${OPTIONS:-print-parent sleep-time graph-time funcgraph-duration funcgraph-overhead funcgraph-cpu funcgraph-abstime funcgraph-proc}
 
 trace_setup() {
