@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 import matplotlib as mpl
+import string
+import glob
 import sys
 
 ################################################################################
@@ -48,105 +50,110 @@ def mDesc(m):
 def mData(m):
     return data[:, metrics[m][3]] 
 
-# Loading data from file
-data = np.loadtxt("cbs_rounds.dat", usecols=sorted(mColumns))
-mTime = data[:, 0]
+def plot_rounds(rounds_data):
+    global data
 
-# Setup figure
-fig = plt.figure()
+    # Loading data from file
+    data = np.loadtxt(rounds_data, usecols=sorted(mColumns))
+    mTime = data[:, 0]
 
-grids = gs.GridSpec(3,1,height_ratios=[2,1,1])
-fig.subplots_adjust(
-    left   = 0.10,
-    bottom = 0.10,
-    right  = 0.95,
-    top    = 0.95,
-    wspace = 0.20,
-    hspace = 0.40,
-)
+    # Setup figure
+    fig = plt.figure()
 
-# ax = plt.gca()
-# ax.get_xaxis().get_major_formatter().set_useOffset(False)
+    grids = gs.GridSpec(3,1,height_ratios=[2,1,1])
+    fig.subplots_adjust(
+        left   = 0.10,
+        bottom = 0.10,
+        right  = 0.95,
+        top    = 0.95,
+        wspace = 0.20,
+        hspace = 0.40,
+    )
 
-################################################################################
-# Plot RoundTime
-################################################################################
-p1 = fig.add_subplot(grids[0])
+    # ax = plt.gca()
+    # ax.get_xaxis().get_major_formatter().set_useOffset(False)
 
-l1, = p1.plot(mTime, mData("Sp_next"), 'r-')
-l2, = p1.plot(mTime, mData("Rt_prev"), 'b-')
+    ################################################################################
+    # Plot RoundTime
+    ################################################################################
+    p1 = fig.add_subplot(grids[0])
 
-# Setup X-Axis
-# p1.set_xlabel("Time [s]")
-p1.set_ylabel("[tq]")
+    l1, = p1.plot(mTime, mData("Sp_next"), 'r')
+    l2, = p1.plot(mTime, mData("Rt_prev"), 'b')
 
+    # Setup X-Axis
+    # p1.set_xlabel("Time [s]")
+    p1.set_ylabel("[tq]")
 
-# Setup Graph title
-p1.set_title("Round Time Control")
-p1.grid(True)
+    # Setup Graph title
+    p1.set_title("Round Time Control")
+    p1.grid(True)
 
-# Add legend
-p1.legend([l1, l2], ["Set Point", "Measured"], prop={'size':fsize})
+    # Add legend
+    p1.legend([l1, l2], ["Set Point", "Measured"], prop={'size':fsize})
 
-################################################################################
-# Plot RoundTime Error
-################################################################################
+    ################################################################################
+    # Plot RoundTime Error
+    ################################################################################
 
-p2 = fig.add_subplot(grids[1])
+    p2 = fig.add_subplot(grids[1])
 
-l1, = p2.plot(mTime, mData("Re_prev"), 'b-')
+    l1, = p2.plot(mTime, mData("Re_prev"), 'b')
 
-# Setup X-Axis
-# p2.set_xlabel("Time [s]")
-p2.set_ylabel("[tq]")
+    # Setup X-Axis
+    # p2.set_xlabel("Time [s]")
+    p2.set_ylabel("[tq]")
 
-# Setup Graph title
-# p2.set_title("Round Time Error")
-p2.grid(True)
+    # Setup Graph title
+    # p2.set_title("Round Time Error")
+    p2.grid(True)
 
-# Add legend
-p2.legend([l1], ["Error"], prop={'size':fsize})
+    # Add legend
+    p2.legend([l1], ["Error"], prop={'size':fsize})
 
+    ################################################################################
+    # Plot RoundTime Correction
+    ################################################################################
 
-################################################################################
-# Plot RoundTime Correction
-################################################################################
+    p3 = fig.add_subplot(grids[2])
 
-p3 = fig.add_subplot(grids[2])
+    l1, = p3.plot(mTime, mData("Co_next"), 'b')
 
-l1, = p3.plot(mTime, mData("Co_next"), 'b-')
+    # Setup X-Axis
+    p3.set_xlabel("Time [s]")
+    p3.set_ylabel("")
 
-# Setup X-Axis
-p3.set_xlabel("Time [s]")
-p3.set_ylabel("")
+    # Setup Graph title
+    # p3.set_title("Round Correction")
+    p3.grid(True)
 
-# Setup Graph title
-# p3.set_title("Round Correction")
-p3.grid(True)
+    # Add legend
+    p3.legend([l1], ["Correction"], prop={'size':fsize})
 
-# Add legend
-p3.legend([l1], ["Correction"], prop={'size':fsize})
+    for item in (
+        [p1.title, p1.xaxis.label, p1.yaxis.label]  +
+        [p2.title, p2.xaxis.label, p2.yaxis.label]  +
+        [p3.title, p3.xaxis.label, p3.yaxis.label]  +
+        p1.get_xticklabels() + p1.get_yticklabels() +
+        p2.get_xticklabels() + p2.get_yticklabels() +
+        p3.get_xticklabels() + p3.get_yticklabels()):
+        item.set_fontsize(fsize)
 
+    # Plot the graph...
+    if show_plot:
+        plt.show()
+    else:
+        rounds_figure = string.replace(rounds_data, ".dat", ".pdf")
+        # print "Plotting [", rounds_figure, "]..."
+        plt.savefig(
+                rounds_figure,
+                papertype = 'a3',
+                format = 'pdf',
+                )
 
-for item in (
-    [p1.title, p1.xaxis.label, p1.yaxis.label]  +
-    [p2.title, p2.xaxis.label, p2.yaxis.label]  +
-    [p3.title, p3.xaxis.label, p3.yaxis.label]  +
-    p1.get_xticklabels() + p1.get_yticklabels() +
-    p2.get_xticklabels() + p2.get_yticklabels() +
-    p3.get_xticklabels() + p3.get_yticklabels()):
-    item.set_fontsize(fsize)
-
-# Plot the graph...
-if show_plot:
-    plt.show()
-else:
-    print "Plotting [cbs_rounds.pdf]..."
-    plt.savefig(
-            "cbs_rounds.pdf",
-            papertype = 'a3',
-            format = 'pdf',
-            )
+for rounds_data in glob.glob('cbs_trace_*_rounds.dat'):
+    print "Plotting rounds [", rounds_data, "]..."
+    plot_rounds(rounds_data)
 
 ################################################################################
 #   Bursts Metrics of interest
@@ -180,124 +187,132 @@ def mTime(t):
     idx = metrics['Time'][3]
     return [d[idx] for d in data[t]]
 
-# Data Loading loop
-time_start = 0;
-data = {}
-infile = open('cbs_bursts.dat', 'r')
-# infile = open('test.dat', 'r')
-for line in infile:
-    if line[0] == '#':
-        continue
-    values = str.split(line)
-    e = values[1]
-    m = [values[i] for i in sorted(mColumns)]
-    if (e not in data.keys()):
-        data[e] = []
-    data[e].append(m)
-    if (time_start == 0):
-        time_start = m[1]
+def plot_bursts(bursts_data):
+    global data
 
-# print data
-# print mData('hb_ctl-32254', 'BT')
-# print mData('hb_tx_001_00-32276', 'Time')
-# print "Applications: ", len(data.keys())
+    # Data Loading loop
+    time_start = 0;
+    data = {}
+    infile = open(bursts_data, 'r')
+    # infile = open('test.dat', 'r')
+    for line in infile:
+        if line[0] == '#':
+            continue
+        values = str.split(line)
+        e = values[1]
+        m = [values[i] for i in sorted(mColumns)]
+        if (e not in data.keys()):
+            data[e] = []
+        data[e].append(m)
+        if (time_start == 0):
+            time_start = m[1]
 
-# print "Columns: ", mColumns
-# print "Data: ", mData('wlg-3818', "Tb_sp")
-# exit(0)
+    # print data
+    # print mData('hb_ctl-32254', 'BT')
+    # print mData('hb_tx_001_00-32276', 'Time')
+    # print "Applications: ", len(data.keys())
 
-tasks_count = len(data.keys())
+    # print "Columns: ", mColumns
+    # print "Data: ", mData('wlg-3818', "Tb_sp")
+    # exit(0)
 
-# Setup figure geometry
-fig_size = (720, tasks_count * 720 / 5)
-fig_dpi = 300
-fig_inches  = (
-    5 * fig_size[0] / fig_dpi,
-    5 * fig_size[1] / fig_dpi,
-)
+    tasks_count = len(data.keys())
 
-# Setup figure
-fig = plt.figure(figsize=fig_inches, dpi=fig_dpi)
+    # Setup figure geometry
+    fig_size = (720, tasks_count * 720 / 5)
+    fig_dpi = 300
+    fig_inches  = (
+        5 * fig_size[0] / fig_dpi,
+        5 * fig_size[1] / fig_dpi,
+    )
 
-grids = gs.GridSpec(tasks_count, 2)
-fig.subplots_adjust(
-    left   = 0.10,
-    bottom = 0.05,
-    right  = 0.95,
-    top    = 0.95,
-    wspace = 0.30,
-    hspace = 0.30,
-)
+    # Setup figure
+    fig = plt.figure(figsize=fig_inches, dpi=fig_dpi)
 
-# Application specifica data plotting
-plot_id = 0
-for task in sorted(data.keys()):
+    grids = gs.GridSpec(tasks_count, 2)
+    fig.subplots_adjust(
+        left   = 0.10,
+        bottom = 0.05,
+        right  = 0.95,
+        top    = 0.95,
+        wspace = 0.30,
+        hspace = 0.30,
+    )
 
-    # print 'Plotting taks: ', task, ' @ time: ', mTime(task)
-    # print 'Tb_sp',    mData(task, 'Tb_sp')
-    # print 'Tb',       mData(task, 'Tb')
-    # print 'Tb_error', mData(task, 'Tb_error')
-    # print 'Tb_next',  mData(task, 'Tb_next')
+    # Application specifica data plotting
+    plot_id = 0
+    for task in sorted(data.keys()):
 
-    ################################################################################
-    # Plot Round Time SP and Measured
-    ################################################################################
-    p1 = fig.add_subplot(grids[plot_id])
-    
-    l1, = p1.plot(mTime(task), mData(task, 'Tb_sp'), 'r-')
-    l2, = p1.plot(mTime(task), mData(task, 'Tb'),    'b-')
-    # print 'Taks (' + task + ') Tb_SP: ', mData(task, 'Tb_sp')
-    # print 'Taks (' + task + ') Tb: ', mData(task, 'Tb')
-    
-    # Setup X-Axis
-    # p1.set_xlabel("Time [s]")
-    p1.set_ylabel('[tq]')
-    
-    # Setup Graph title
-    p1.set_title('Burst Time Action (' + task +')')
-    p1.grid(True)
-    
-    # Add legend
-    p1.legend([l1, l2], ['Set Point', 'Measured'], prop={'size':fsize})
+        # print 'Plotting taks: ', task, ' @ time: ', mTime(task)
+        # print 'Tb_sp',    mData(task, 'Tb_sp')
+        # print 'Tb',       mData(task, 'Tb')
+        # print 'Tb_error', mData(task, 'Tb_error')
+        # print 'Tb_next',  mData(task, 'Tb_next')
 
-    ################################################################################
-    # Plot Round Time Error and Next
-    ################################################################################
-    p2 = fig.add_subplot(grids[plot_id+1])
-    
-    l1, = p2.plot(mTime(task), mData(task, 'Tb_error'), 'r-')
-    l2, = p2.plot(mTime(task), mData(task, 'Tb_next'),  'g-')
-    # print 'Taks (' + task + ') Tb_error: ', mData(task, 'Tb_error')
-    # print 'Taks (' + task + ') Tb_next: ', mData(task, 'Tb_next')
-    
-    # Setup X-Axis
-    # p1.set_xlabel("Time [s]")
-    p2.set_ylabel('[tq]')
-    
-    # Setup Graph title
-    p2.set_title('Burst Time Control (' + task + ')')
-    p2.grid(True)
-    
-    # Add legend
-    p2.legend([l1, l2], ['Error', 'Next'], prop={'size':fsize})
+        ################################################################################
+        # Plot Round Time SP and Measured
+        ################################################################################
+        p1 = fig.add_subplot(grids[plot_id])
 
-    plot_id += 2
+        l1, = p1.plot(mTime(task), mData(task, 'Tb_sp'), 'r')
+        l2, = p1.plot(mTime(task), mData(task, 'Tb'),    'b')
+        # print 'Taks (' + task + ') Tb_SP: ', mData(task, 'Tb_sp')
+        # print 'Taks (' + task + ') Tb: ', mData(task, 'Tb')
 
-    for item in (
-        [p1.title, p1.xaxis.label, p1.yaxis.label]  +
-        [p2.title, p2.xaxis.label, p2.yaxis.label]  +
-        p1.get_xticklabels() + p1.get_yticklabels() +
-        p2.get_xticklabels() + p2.get_yticklabels()):
-        item.set_fontsize(fsize)
+        # Setup X-Axis
+        # p1.set_xlabel("Time [s]")
+        p1.set_ylabel('[tq]')
 
-# Plot the graph...
-if show_plot:
-    plt.show()
-else:
-    print "Plotting [cbs_bursts.pdf]..."
-    plt.savefig(
-            "cbs_bursts.pdf",
-            orientation = 'portrait',
-            format = 'pdf',
-            )
+        # Setup Graph title
+        p1.set_title('Burst Time Action (' + task +')')
+        p1.grid(True)
+
+        # Add legend
+        p1.legend([l1, l2], ['Set Point', 'Measured'], prop={'size':fsize})
+
+        ################################################################################
+        # Plot Round Time Error and Next
+        ################################################################################
+        p2 = fig.add_subplot(grids[plot_id+1])
+
+        l1, = p2.plot(mTime(task), mData(task, 'Tb_error'), 'r')
+        l2, = p2.plot(mTime(task), mData(task, 'Tb_next'),  'g')
+        # print 'Taks (' + task + ') Tb_error: ', mData(task, 'Tb_error')
+        # print 'Taks (' + task + ') Tb_next: ', mData(task, 'Tb_next')
+
+        # Setup X-Axis
+        # p1.set_xlabel("Time [s]")
+        p2.set_ylabel('[tq]')
+
+        # Setup Graph title
+        p2.set_title('Burst Time Control (' + task + ')')
+        p2.grid(True)
+
+        # Add legend
+        p2.legend([l1, l2], ['Error', 'Next'], prop={'size':fsize})
+
+        plot_id += 2
+
+        for item in (
+            [p1.title, p1.xaxis.label, p1.yaxis.label]  +
+            [p2.title, p2.xaxis.label, p2.yaxis.label]  +
+            p1.get_xticklabels() + p1.get_yticklabels() +
+            p2.get_xticklabels() + p2.get_yticklabels()):
+            item.set_fontsize(fsize)
+
+    # Plot the graph...
+    if show_plot:
+        plt.show()
+    else:
+        bursts_figure = string.replace(bursts_data, ".dat", ".pdf")
+        # print "Plotting [", bursts_figure, "]..."
+        plt.savefig(
+                bursts_figure,
+                orientation = 'portrait',
+                format = 'pdf',
+                )
+
+for bursts_data in glob.glob('cbs_trace_*_bursts.dat'):
+    print "Plotting bursts [", bursts_data, "]..."
+    plot_bursts(bursts_data)
 
