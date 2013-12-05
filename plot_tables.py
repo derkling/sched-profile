@@ -316,3 +316,143 @@ for bursts_data in glob.glob('cbs_trace_*_bursts.dat'):
     print "Plotting bursts [", bursts_data, "]..."
     plot_bursts(bursts_data)
 
+################################################################################
+#   Latency Metrics of interest
+################################################################################
+# Record data:
+# Burst                Task       Time[s]     Delay[ns]     Slice[ns]
+metrics = {
+# Label          Name                    Description                  Column  Index
+# 'Task':     [ 'Task',                 'Task name',                   1,      0],
+ 'Time':      [ 'Time [s]',             'Burst completion time [s]',   2,      0],
+ 'Delay':     [ 'Delay [ns]',           'Ready task RQ delay [ns]',    3,      1],
+ 'Slice':     [ 'Slice [ns]',           'Running task CPU slice [ns]', 4,      2],
+}
+mColumns = [c[2] for c in metrics.values()]
+
+def plot_latencies(latencies_data):
+    global data
+
+    # Data Loading loop
+    time_start = 0;
+    data = {}
+    infile = open(latencies_data, 'r')
+    # infile = open('test.dat', 'r')
+    for line in infile:
+        if line[0] == '#':
+            continue
+        values = str.split(line)
+        e = values[1]
+        m = [values[i] for i in sorted(mColumns)]
+        if (e not in data.keys()):
+            data[e] = []
+        data[e].append(m)
+        if (time_start == 0):
+            time_start = m[1]
+
+    # print data
+    # print mData('hb_ctl-32254', 'BT')
+    # print mData('hb_tx_001_00-32276', 'Time')
+    # print "Applications: ", len(data.keys())
+
+    # print "Columns: ", mColumns
+    # print "Data: ", mData('wlg-3818', "Tb_sp")
+    # exit(0)
+
+    tasks_count = len(data.keys())
+
+    # Setup figure geometry
+    fig_size = (720, tasks_count * 720 / 5)
+    fig_dpi = 300
+    fig_inches  = (
+        5 * fig_size[0] / fig_dpi,
+        5 * fig_size[1] / fig_dpi,
+    )
+
+    # Setup figure
+    fig = plt.figure(figsize=fig_inches, dpi=fig_dpi)
+
+    grids = gs.GridSpec(tasks_count, 2)
+    fig.subplots_adjust(
+        left   = 0.10,
+        bottom = 0.05,
+        right  = 0.95,
+        top    = 0.95,
+        wspace = 0.30,
+        hspace = 0.30,
+    )
+
+    # Application specifica data plotting
+    plot_id = 0
+    for task in sorted(data.keys()):
+
+        # print 'Plotting taks: ', task, ' @ time: ', mTime(task)
+        # print 'Delay', mData(task, 'Delay')
+        # print 'Slice', mData(task, 'Slice')
+
+        ################################################################################
+        # Plot Round Time SP and Measured
+        ################################################################################
+        p1 = fig.add_subplot(grids[plot_id])
+
+        l1, = p1.plot(mTime(task), mData(task, 'Delay'), 'r+ ')
+        # print 'Taks (' + task + ') Delay: ', mData(task, 'Delay')
+
+        # Setup X-Axis
+        # p1.set_xlabel("Time [s]")
+        p1.set_ylabel('[ns]')
+        p1.set_ylim(ymin=1, ymax=1000*1000000)
+        p1.set_yscale('log')
+
+        # Setup Graph title
+        p1.set_title('Ready Task RQ Delay (' + task +')')
+        p1.grid(True)
+
+        # Add legend
+        p1.legend([l1], ['RQ Delay'], prop={'size':fsize})
+
+        ################################################################################
+        # Plot Round Time Error and Next
+        ################################################################################
+        p2 = fig.add_subplot(grids[plot_id+1])
+
+        l1, = p2.plot(mTime(task), mData(task, 'Slice'), 'b+ ')
+        # print 'Taks (' + task + ') Slice: ', mData(task, 'Slice')
+
+        # Setup X-Axis
+        # p1.set_xlabel("Time [s]")
+        p2.set_ylabel('[ns]')
+        p2.set_ylim(ymin=1, ymax=1000*1000000)
+        p2.set_yscale('log')
+
+        # Setup Graph title
+        p2.set_title('Running Task Slice (' + task + ')')
+        p2.grid(True)
+
+        # Add legend
+        p2.legend([l1], ['CPU Slice'], prop={'size':fsize})
+
+        plot_id += 2
+
+        for item in (
+            [p1.title, p1.xaxis.label, p1.yaxis.label]  +
+            [p2.title, p2.xaxis.label, p2.yaxis.label]  +
+            p1.get_xticklabels() + p1.get_yticklabels() +
+            p2.get_xticklabels() + p2.get_yticklabels()):
+            item.set_fontsize(fsize)
+
+    # Plot the graph...
+    if show_plot:
+        plt.show()
+    else:
+        latencies_figure = string.replace(latencies_data, ".dat", ".pdf")
+        # print "Plotting [", latencies_figure, "]..."
+        plt.savefig(
+                latencies_figure,
+                orientation = 'portrait',
+                format = 'pdf',
+                )
+
+for latencies_data in glob.glob('cbs_trace_*_latencies.dat'):
+    print "Plotting latencies [", latencies_data, "]..."
+    plot_latencies(latencies_data)
