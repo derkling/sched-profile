@@ -160,7 +160,7 @@ trace_multi() {
         $BENCH"
   trace_start "$CMD"
   for I in `seq $CINTS`; do
-    $CMD &
+    $CMD | tee cbs_trace_$TAG.log &
     JOBS+="`echo $!` "
     echo -en "$I instances running...\r"
   done
@@ -187,7 +187,7 @@ trace_multi() {
           $BENCH"
     trace_start "$CMD"
     for I in `seq $CINTS`; do
-      $CMD &
+      $CMD | tee fair_trace_$TAG.log &
       JOBS+="`echo $!` "
       echo -en "$I instances running...\r"
     done
