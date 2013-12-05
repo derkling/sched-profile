@@ -7,6 +7,7 @@ DATFILE="${SCHED}_trace_*.dat"
 DATFILE=`echo $DATFILE`
 RNDFILE=${DATFILE/.dat/_rounds.dat}
 BRSFILE=${DATFILE/.dat/_bursts.dat}
+LTSFILE=${DATFILE/.dat/_latencies.dat}
 EVTFILE=${DATFILE/.dat/_events.dat}
 
 ### Round parsing
@@ -48,6 +49,26 @@ chmod a+x parse_bursts.awk
 trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_bursts.awk \
 	> $BRSFILE
+
+### Latency parsing
+cat > parse_latencies.awk <<EOF
+#!/usr/bin/awk -f
+BEGIN {
+	printf("# Scheduling Latency\\n")
+	printf("# %5s %19s %13s %13s %13s\\n",
+		"Burst", "Task", "Time[s]", "Delay[ns]", "Slice[ns]")
+}
+/sched_process_latency/ {
+	#print ">>>>> " \$0
+	printf(" %5d %20s %13.6f %13d %13d\\n",
+		++i, \$1, \$3, \$6, \$8)
+}
+EOF
+chmod a+x parse_latencies.awk
+
+trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
+	tr '|[]=' ' ' | ./parse_latencies.awk \
+	> $LTSFILE
 
 trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null \
 	> $EVTFILE
