@@ -453,6 +453,6 @@ def plot_latencies(latencies_data):
                 format = 'pdf',
                 )
 
-for latencies_data in glob.glob('cbs_trace_*_latencies.dat'):
+for latencies_data in glob.glob('*_trace_*_latencies.dat'):
     print "Plotting latencies [", latencies_data, "]..."
     plot_latencies(latencies_data)
