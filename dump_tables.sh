@@ -1,9 +1,8 @@
 #!/bin/bash
 
-SCHED=${1:-"cbs"}
-CPUS=${2:-"3"}
+CPUS=${1:-"3"}
 
-DATFILE="${SCHED}_trace_*.dat"
+DATFILE="*_trace_*.dat"
 DATFILE=`echo $DATFILE`
 RNDFILE=${DATFILE/.dat/_rounds.dat}
 BRSFILE=${DATFILE/.dat/_bursts.dat}
@@ -12,6 +11,8 @@ EVTFILE=${DATFILE/.dat/_events.dat}
 
 ################################################################################
 ### Round parsing
+if [[ "$DATFILE" == *cbs_* ]]; then
+
 cat > parse_rounds.awk <<EOF
 #!/usr/bin/awk -f
 BEGIN {
@@ -31,8 +32,13 @@ trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_rounds.awk \
 	> $RNDFILE
 
+fi # DATFILE == cbs_*
+
+
 ################################################################################
 ### Round parsing
+if [[ "$DATFILE" == *cbs_* ]]; then
+
 cat > parse_bursts.awk <<EOF
 #!/usr/bin/awk -f
 BEGIN {
@@ -51,6 +57,8 @@ chmod a+x parse_bursts.awk
 trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_bursts.awk \
 	> $BRSFILE
+
+fi # DATFILE == cbs_*
 
 ################################################################################
 ### Latency parsing
