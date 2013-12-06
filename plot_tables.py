@@ -390,6 +390,8 @@ def plot_latencies(latencies_data):
     # Data Loading loop
     time_start = 0;
     data = {}
+    delay_stats = {}
+    slice_stats = {}
     infile = open(latencies_data, 'r')
     # infile = open('test.dat', 'r')
     for line in infile:
@@ -400,7 +402,12 @@ def plot_latencies(latencies_data):
         m = [values[i] for i in sorted(mColumns)]
         if (e not in data.keys()):
             data[e] = []
+            delay_stats[e] = Stats()
+            slice_stats[e] = Stats()
         data[e].append(m)
+        # print "Data: ", m, "Delay: ", metrics['Delay'][3], " => ", float(m[metrics['Delay'][3]])
+        delay_stats[e].add_sample(float(m[metrics['Delay'][3]]))
+        slice_stats[e].add_sample(float(m[metrics['Slice'][3]]))
         if (time_start == 0):
             time_start = m[1]
 
@@ -452,6 +459,11 @@ def plot_latencies(latencies_data):
         l1, = p1.plot(mTime(task), mData(task, 'Delay'), 'r+ ')
         # print 'Taks (' + task + ') Delay: ', mData(task, 'Delay')
 
+        # print "Delay(", task, "): ", delay_stats[task].get_stats()
+        (count, avg, var, std, ste, c95, c99) = delay_stats[task].get_stats()
+        plt.axhline(y=avg, linewidth=1, color='g')
+        plt.axhspan(max(1,avg-c99), avg+c99, facecolor='g', alpha=0.2)
+
         # Setup X-Axis
         # p1.set_xlabel("Time [s]")
         p1.set_ylabel('[ns]')
@@ -472,6 +484,10 @@ def plot_latencies(latencies_data):
 
         l1, = p2.plot(mTime(task), mData(task, 'Slice'), 'b+ ')
         # print 'Taks (' + task + ') Slice: ', mData(task, 'Slice')
+        # print "Slice(", task, "): ", slice_stats[task].get_stats()
+        (count, avg, var, std, ste, c95, c99) = slice_stats[task].get_stats()
+        plt.axhline(y=avg, linewidth=1, color='g')
+        plt.axhspan(max(1,avg-c99), avg+c99, facecolor='g', alpha=0.2)
 
         # Setup X-Axis
         # p1.set_xlabel("Time [s]")
