@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 import matplotlib as mpl
 import string
+import math
 import glob
 import sys
 
@@ -17,6 +18,59 @@ show_plot = 0
 
 # Plots font size
 fsize = 10
+
+################################################################################
+#   Statistics Accumulator
+################################################################################
+class Stats():
+    def __init__(self):
+        self.ssum   = .0
+        self.ssum2  = .0
+        self.scount =  0
+
+    def do_stats(self):
+        self.savg = (self.ssum  / self.scount)
+        self.svar = (self.ssum2 / self.scount) - (self.savg * self.savg)
+        self.sstd = (math.sqrt(self.svar))
+        self.sste = (self.sstd / math.sqrt(self.scount))
+        self.sc95 = (1.96 * self.sste)
+        self.sc99 = (2.58 * self.sste)
+
+    def set_data(self, ssum, ssum2, scount):
+        self.ssum   = ssum
+        self.ssum2  = ssum2
+        self.scount = scount
+        self.do_stats()
+
+    def add_sample(self, sample):
+        self.ssum   += sample
+        self.ssum2  += (sample * sample)
+        self.scount += 1
+
+    def get_count(self):
+        return self.scount
+
+    def get_avg(self):
+        return self.savg
+
+    def get_var(self):
+        return self.svar
+
+    def get_std(self):
+        return self.std
+
+    def get_ste(self):
+        return self.ste
+
+    def get_c95(self):
+        return self.sc95
+
+    def get_c99(self):
+        return self.sc99
+
+    def get_stats(self):
+        self.do_stats()
+        return (self.scount, self.savg, self.svar, self.sstd, self.sste, self.sc95, self.sc99)
 
 ################################################################################
 #   Round Metrics of interest
