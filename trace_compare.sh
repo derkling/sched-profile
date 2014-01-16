@@ -20,6 +20,14 @@ TRACER=${TRACER:-""}
 # The FTrace events to trace
 EVENTS=${EVENTS:-"sched:sched_switch sched:sched_process_fork sched:sched_process_latency sched_cbs:*"}
 
+# The CPUs Sandbox where tests should be run
+SBOX=${SBOX:-"/sys/fs/cgroup/sbox"}
+if [[ ! -f ${SBOX}/cpuset.cpus ]]; then
+	echo "ERROR: CPUs sandbox [$SBOX] not configured"
+	exit -1
+fi
+CPUS=${CPUS:-`cat /sys/fs/cgroup/sbox/cpuset.cpus`}
+
 
 ################################################################################
 ### Do not touch under this line
