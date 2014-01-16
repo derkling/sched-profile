@@ -1,13 +1,16 @@
 #!/bin/bash
 
-CPUS=${1:-"3"}
+CPU=${1:-"3"}
 
 DATFILE="*_trace_*.dat"
 DATFILE=`echo $DATFILE`
-RNDFILE=${DATFILE/.dat/_rounds.dat}
-BRSFILE=${DATFILE/.dat/_bursts.dat}
-LTSFILE=${DATFILE/.dat/_latencies.dat}
-EVTFILE=${DATFILE/.dat/_events.dat}
+TABFILE=${DATFILE/_trace_/_table_}
+CPUID=`printf "%02d" $CPU`
+RNDFILE=${TABFILE/.dat/_C${CPUID}_rounds.dat}
+BRSFILE=${TABFILE/.dat/_C${CPUID}_bursts.dat}
+LTSFILE=${TABFILE/.dat/_C${CPUID}_latencies.dat}
+EVTFILE=${TABFILE/.dat/_C${CPUID}_events.dat}
+AEVFILE=${TABFILE/.dat/_Call_events.dat}
 
 ################################################################################
 ### Round parsing
@@ -28,7 +31,7 @@ BEGIN {
 EOF
 chmod a+x parse_rounds.awk
 
-trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
+trace-cmd report --cpu $CPU $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_rounds.awk \
 	> $RNDFILE
 
@@ -54,7 +57,7 @@ BEGIN {
 EOF
 chmod a+x parse_bursts.awk
 
-trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
+trace-cmd report --cpu $CPU $DATFILE 2>/dev/null | \
 	tr '|[]' ' ' | ./parse_bursts.awk \
 	> $BRSFILE
 
@@ -77,12 +80,16 @@ BEGIN {
 EOF
 chmod a+x parse_latencies.awk
 
-trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null | \
+trace-cmd report --cpu $CPU $DATFILE 2>/dev/null | \
 	tr '|[]=' ' ' | ./parse_latencies.awk \
 	> $LTSFILE
 
 ################################################################################
 ### Events dumping
-trace-cmd report --cpu $CPUS $DATFILE 2>/dev/null \
+trace-cmd report --cpu $CPU $DATFILE 2>/dev/null \
 	> $EVTFILE
+
+[[ -f $AEVFILE ]] && exit 0
+trace-cmd report $DATFILE 2>/dev/null \
+	> $AEVFILE
 

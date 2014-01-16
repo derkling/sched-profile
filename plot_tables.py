@@ -205,7 +205,7 @@ def plot_rounds(rounds_data):
                 format = 'pdf',
                 )
 
-for rounds_data in glob.glob('cbs_trace_*_rounds.dat'):
+for rounds_data in glob.glob('cbs_table_*_rounds.dat'):
     print "Plotting rounds [", rounds_data, "]..."
     plot_rounds(rounds_data)
 
@@ -366,7 +366,7 @@ def plot_bursts(bursts_data):
                 format = 'pdf',
                 )
 
-for bursts_data in glob.glob('cbs_trace_*_bursts.dat'):
+for bursts_data in glob.glob('cbs_table_*_bursts.dat'):
     print "Plotting bursts [", bursts_data, "]..."
     plot_bursts(bursts_data)
 
@@ -523,6 +523,6 @@ def plot_latencies(latencies_data):
                 format = 'pdf',
                 )
 
-for latencies_data in glob.glob('*_trace_*_latencies.dat'):
+for latencies_data in glob.glob('*_table_*_latencies.dat'):
     print "Plotting latencies [", latencies_data, "]..."
     plot_latencies(latencies_data)
