@@ -170,16 +170,11 @@ trace_reset() {
 }
 
 
-
 ################################################################################
-### Test Functions
+### Scheduler specific testing
 ################################################################################
 
-trace_multi() {
-  log_info "[CONF] Running [$TAG] tests with [$CINTS] instances..."
-
-  trace_setup
-
+test_cbs() {
   log_info "[TEST] Running [$TAG] on CBS scheduler..."
   pushd $TESTD
   JOBS=''
@@ -219,32 +214,29 @@ $BENCH
 $CMD
 EOF
 
-  trace_reset
+}
 
-  if [[ "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
+test_fair() {
+  log_info "[TEST] Running [$TAG] on FAIR scheduler..."
+  pushd $TESTD
+  JOBS=''
+  CMD="$CHRT -f 10
+        taskset -c ${CPUS}
+        $CHRT -o 0
+        $BENCH"
+  trace_start "$CMD"
+  for I in `seq $CINTS`; do
+    $CMD | tee fair_trace_$TAG.log &
+    JOBS+="`echo $!` "
+    echo -en "$I instances running...\r"
+  done
+  popd
 
-    trace_setup
-
-    log_info "[TEST] Running [$TAG] on FAIR scheduler..."
-    pushd $TESTD
-    JOBS=''
-    CMD="$CHRT -f 10
-          taskset -c ${CPUS}
-          $CHRT -o 0
-          $BENCH"
-    trace_start "$CMD"
-    for I in `seq $CINTS`; do
-      $CMD | tee fair_trace_$TAG.log &
-      JOBS+="`echo $!` "
-      echo -en "$I instances running...\r"
-    done
-    popd
-
-    log_debug "Waiting for tests PIDs: $JOBS..."
-    wait $JOBS
-    trace_stop
-    trace-cmd extract &>/dev/null
-    mv trace.dat fair_trace_$TAG.dat
+  log_debug "Waiting for tests PIDs: $JOBS..."
+  wait $JOBS
+  trace_stop
+  trace-cmd extract &>/dev/null
+  mv trace.dat fair_trace_$TAG.dat
   cat > fair_trace_$TAG.txt <<EOF
 ################################################################################
 # Date:    `date`
@@ -264,8 +256,25 @@ $BENCH
 # COMMAND:
 $CMD
 EOF
-    trace_reset
 
+}
+
+
+################################################################################
+### Test Function
+################################################################################
+
+trace_multi() {
+  log_info "[CONF] Running [$TAG] tests with [$CINTS] instances..."
+
+  trace_setup
+  test_cbs
+  trace_reset
+
+  if [[ "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
+    trace_setup
+    test_fair
+    trace_reset
   fi
 
 }
