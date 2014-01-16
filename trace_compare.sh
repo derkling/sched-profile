@@ -199,17 +199,18 @@ test_cbs() {
 ################################################################################
 # Date:    `date`
 # System:  `uname -a`
+# CPUs:    $CPULIST
 # CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
 # CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
 # Sched Features:
-#  `cat /sys/kernel/debug/sched_features`
+`cat /sys/kernel/debug/sched_features`
+# Traced Events:
+$EVENTS
 ################################################################################
 # TAG:
 $TAG
-################################################################################
 # BENCHMARK:
 $BENCH
-################################################################################
 # COMMAND:
 $CMD
 EOF
@@ -245,14 +246,14 @@ test_fair() {
 # CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
 # CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
 # Sched Features:
-#  `cat /sys/kernel/debug/sched_features`
+`cat /sys/kernel/debug/sched_features`
+# Traced Events:
+$EVENTS
 ################################################################################
 # TAG:
 $TAG
-################################################################################
 # BENCHMARK:
 $BENCH
-################################################################################
 # COMMAND:
 $CMD
 EOF
