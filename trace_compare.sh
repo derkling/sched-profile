@@ -86,6 +86,27 @@ log_warn()
   echo -e "$COLOR_PINK$* $COLOR_RESET"
 }
 
+################################################################################
+### Utilities
+################################################################################
+
+
+sbox_to_cpulist() {
+  CPULIST=${CPUS//,/ }
+  echo "Expaning [$CPULIST]..."
+  [[ $CPULIST == *-* ]] || return
+  for R in $CPULIST; do
+    if [[ $R != *-* ]]; then
+      LIST+="$R "
+      continue
+    fi
+    for C in `seq ${R/-/ }`; do
+      LIST+="$C "
+    done
+  done
+  CPULIST=$LIST
+}
+sbox_to_cpulist
 
 ################################################################################
 ### FTrace Utility Functions
@@ -228,6 +249,7 @@ EOF
 ################################################################################
 # Date:    `date`
 # System:  `uname -a`
+# CPUs:    $CPULIST
 # CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
 # CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
 # Sched Features:
