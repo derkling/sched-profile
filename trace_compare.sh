@@ -184,7 +184,7 @@ trace_multi() {
   pushd $TESTD
   JOBS=''
   CMD="$CHRT -f 10
-        taskset -c 3
+        taskset -c ${CPUS}
         $CHRT -c 0
         $BENCH"
   trace_start "$CMD"
@@ -229,7 +229,7 @@ EOF
     pushd $TESTD
     JOBS=''
     CMD="$CHRT -f 10
-          taskset -c 3
+          taskset -c ${CPUS}
           $CHRT -o 0
           $BENCH"
     trace_start "$CMD"
@@ -281,10 +281,10 @@ report_sched_latency() {
   fi
   log_info "[DATA] Sched Latency ${1^^*}"
   trace-cmd report -i $1_trace_$TAG.dat \
-    --cpu 3 -w -F "sched_switch, sched_wakeup.*" \
+    --cpu ${CPUS} -w -F "sched_switch, sched_wakeup.*" \
     &>/dev/null | tail -n4
   kernelshark $1_trace_$TAG.dat &
-  $TERM -e "./trace_pager.sh -i $1_trace_$TAG.dat --cpu=3" &
+  $TERM -e "./trace_pager.sh -i $1_trace_$TAG.dat --cpu=${CPUS}" &
 }
 
 report_sched_time() {
@@ -294,7 +294,7 @@ report_sched_time() {
   log_info "[DATA] Sched Time ${1^^*}"
   rm -f $1_time_sched_$TAG.dat 2>/dev/null
   trace-cmd report -i $1_trace_$TAG.dat \
-    --cpu 3 &>/dev/null | \
+    --cpu ${CPUS} &>/dev/null | \
     tr -d ':' | \
     awk -v FILE=$1_time_sched_$TAG.dat '
           BEGIN {
@@ -358,7 +358,11 @@ ARCHIVE=\`awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' \$0\`
 mkdir \$DESTDIR || exit 1
 tail -n+\$ARCHIVE \$0 | tar xj -C \$DESTDIR
 cd \$DESTDIR
-./dump_tables.sh
+for C in $CPULIST; do
+  echo "Dumping tables for CPU[\$C]..."
+  ./dump_tables.sh \$C
+done
+echo "Plotting tables"
 ./plot_tables.py
 cd ..
 xdg-open \$DESTDIR
