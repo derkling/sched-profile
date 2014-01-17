@@ -26,7 +26,7 @@ BCMD=`get_test_configuration "# BENCHMARK:"`
 
 ################################################################################
 ### Round parsing
-if [[ "$DATFILE" == *cbs_* ]]; then
+if [[ "$DATFILE" == *cbs_* && "$EVENTS" == *cbs_round* ]]; then
 
 cat > parse_rounds.awk <<EOF
 #!/usr/bin/awk -f
@@ -51,8 +51,8 @@ fi # DATFILE == cbs_*
 
 
 ################################################################################
-### Round parsing
-if [[ "$DATFILE" == *cbs_* ]]; then
+### Burst parsing
+if [[ "$DATFILE" == *cbs_* && "$EVENTS" == *cbs_burst* ]]; then
 
 cat > parse_bursts.awk <<EOF
 #!/usr/bin/awk -f
@@ -77,6 +77,8 @@ fi # DATFILE == cbs_*
 
 ################################################################################
 ### Latency parsing
+if [[ "$EVENTS" == *_process_latency* ]]; then
+
 cat > parse_latencies.awk <<EOF
 #!/usr/bin/awk -f
 BEGIN {
@@ -95,6 +97,9 @@ chmod a+x parse_latencies.awk
 trace-cmd report --cpu $CPU $DATFILE 2>/dev/null | \
 	tr '|[]=' ' ' | ./parse_latencies.awk \
 	> $LTSFILE
+
+fi # EVENTS == *_process_latency*
+
 
 ################################################################################
 ### Events dumping
