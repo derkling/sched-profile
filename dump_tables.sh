@@ -4,6 +4,7 @@ CPU=${1:-"3"}
 
 DATFILE="*_trace_*.dat"
 DATFILE=`echo $DATFILE`
+TXTFILE=${DATFILE/.dat/.txt}
 TABFILE=${DATFILE/_trace_/_table_}
 CPUID=`printf "%02d" $CPU`
 RNDFILE=${TABFILE/.dat/_C${CPUID}_rounds.dat}
@@ -11,6 +12,17 @@ BRSFILE=${TABFILE/.dat/_C${CPUID}_bursts.dat}
 LTSFILE=${TABFILE/.dat/_C${CPUID}_latencies.dat}
 EVTFILE=${TABFILE/.dat/_C${CPUID}_events.dat}
 AEVFILE=${TABFILE/.dat/_Call_events.dat}
+
+
+################################################################################
+### Parsing Test Report file
+get_test_configuration() {
+grep -A1 "$1" $TXTFILE | tail -n1
+}
+
+EVENTS=`get_test_configuration "Traced Events:"`
+BTAG=`get_test_configuration "# TAG:"`
+BCMD=`get_test_configuration "# BENCHMARK:"`
 
 ################################################################################
 ### Round parsing
