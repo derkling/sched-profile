@@ -464,6 +464,8 @@ def plot_latencies(latencies_data):
         (count, avg, var, std, ste, c95, c99) = delay_stats[task].get_stats()
         plt.axhline(y=avg, linewidth=1, color='g')
         plt.axhspan(max(1,avg-c99), avg+c99, facecolor='g', alpha=0.2)
+        plt.axhspan(max(1,avg-(2*std)), avg+(2*std), facecolor='y', alpha=0.1)
+        plt.axhspan(max(1,avg-(1*std)), avg+(1*std), facecolor='y', alpha=0.2)
 
         # Setup X-Axis
         # p1.set_xlabel("Time [s]")
@@ -489,6 +491,8 @@ def plot_latencies(latencies_data):
         (count, avg, var, std, ste, c95, c99) = slice_stats[task].get_stats()
         plt.axhline(y=avg, linewidth=1, color='g')
         plt.axhspan(max(1,avg-c99), avg+c99, facecolor='g', alpha=0.2)
+        plt.axhspan(max(1,avg-(2*std)), avg+(2*std), facecolor='y', alpha=0.1)
+        plt.axhspan(max(1,avg-(1*std)), avg+(1*std), facecolor='y', alpha=0.2)
 
         # Setup X-Axis
         # p1.set_xlabel("Time [s]")
@@ -617,6 +621,8 @@ def plot_migrations():
         (count, avg, var, std, ste, c95, c99) = delta_stats[cpu].get_stats()
         plt.axhline(y=avg, linewidth=1, color='g')
         plt.axhspan(avg-c99, avg+c99, facecolor='g', alpha=0.2)
+        plt.axhspan(max(0.000001,avg-(2*std)), avg+(2*std), facecolor='y', alpha=0.1)
+        plt.axhspan(max(0.000001,avg-(1*std)), avg+(1*std), facecolor='y', alpha=0.2)
 
         # Setup X-Axis
         # p1.set_xlabel("Time [s]")
