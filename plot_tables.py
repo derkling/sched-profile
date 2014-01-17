@@ -8,6 +8,7 @@ import string
 import math
 import glob
 import sys
+import re
 
 ################################################################################
 #  Configuration
@@ -526,3 +527,163 @@ def plot_latencies(latencies_data):
 for latencies_data in glob.glob('*_table_*_latencies.dat'):
     print "Plotting latencies [", latencies_data, "]..."
     plot_latencies(latencies_data)
+
+
+################################################################################
+#   Migration Metrics of interest
+################################################################################
+# Record data:
+# Burst                Task       Time[s]     Delay[ns]     Slice[ns]
+metrics = {
+# Label          Name                    Description                  Column  Index
+# 'Task':     [ 'Task',                 'Task name',                    1,      0],
+ 'Time':      [ 'Time [s]',             'Task migration time [s]',      3,      0],
+ 'Delta':     [ 'Delta [us]',           'Time last migration [us]',     4,      1],
+ 'Src':       [ 'Src CPU',              'Departing CPU',                5,      2],
+ 'Dst':       [ 'Dst CPU',              'Arrival CPU',                  6,      3],
+}
+mColumns = [c[2] for c in metrics.values()]
+
+# The regex to match a CPU id within a migration filename, e.g.
+# fair_table_MIG-WLG-B3P2I1_C07_migrations.dat
+#                            ^^
+#                            ||
+#                    CPU Id to be matched
+migcpu_regex = re.compile("(?<=_C)(?P<cpu_id>.*?)(?=_)")
+
+def parse_migrations(migrations_data):
+    global data
+
+    # Getting CPU id
+    match = migcpu_regex.search(migrations_data)
+    cpu_id = 'C' + match.group('cpu_id')
+
+    # Data Loading loop
+    infile = open(migrations_data, 'r')
+    # infile = open('test.dat', 'r')
+    for line in infile:
+        if line[0] == '#':
+            continue
+        values = str.split(line)
+        m = [values[i] for i in sorted(mColumns)]
+        if (cpu_id not in data.keys()):
+            data[cpu_id] = []
+            delta_stats[cpu_id] = Stats()
+        data[cpu_id].append(m)
+        # print "Sample: ", m, "\ndelta: ", metrics['Delta'][3], " => ", float(m[metrics['Delta'][3]])
+        delta_stats[cpu_id].add_sample(float(m[metrics['Delta'][3]]))
+
+
+def plot_migrations():
+    cpus_count = len(data.keys())
+
+    # Setup figure geometry
+    fig_size = (720, cpus_count * 720 / 5)
+    fig_dpi = 300
+    fig_inches  = (
+        5 * fig_size[0] / fig_dpi,
+        5 * fig_size[1] / fig_dpi,
+    )
+
+    # Setup figure
+    fig = plt.figure(figsize=fig_inches, dpi=fig_dpi)
+
+    grids = gs.GridSpec(cpus_count, 2)
+    fig.subplots_adjust(
+        left   = 0.10,
+        bottom = 0.05,
+        right  = 0.95,
+        top    = 0.95,
+        wspace = 0.30,
+        hspace = 0.30,
+    )
+
+    # Application specifica data plotting
+    plot_id = 0
+    for cpu in sorted(data.keys()):
+
+        # print 'Plotting CPU: ', cpu, ' @ time: ', mTime(cpu)
+        # print 'Delta', mData(cpu, 'Delta')
+
+        ################################################################################
+        # Plot Migration Interarrival events
+        ################################################################################
+        p1 = fig.add_subplot(grids[plot_id])
+
+        l1, = p1.plot(mTime(cpu), mData(cpu, 'Delta'), 'r+ ')
+        # print 'CPU (' + cpu + ') Delta: ', mData(cpu, 'Delta')
+
+        # print "Delta(", cpu, "): ", delta_stats[cpu].get_stats()
+        (count, avg, var, std, ste, c95, c99) = delta_stats[cpu].get_stats()
+        plt.axhline(y=avg, linewidth=1, color='g')
+        plt.axhspan(avg-c99, avg+c99, facecolor='g', alpha=0.2)
+
+        # Setup X-Axis
+        # p1.set_xlabel("Time [s]")
+        p1.set_ylabel('[s]')
+        p1.set_ylim(ymin=0.000001, ymax=1)
+        p1.set_yscale('log')
+
+        # Setup Graph title
+        p1.set_title('Migrations Inter-Arrival Time (' + cpu +')')
+        p1.grid(True)
+
+        # Add legend
+        p1.legend([l1], ['Interval'], prop={'size':fsize})
+
+        ################################################################################
+        # Plot Migration Departing and Arriving CPU
+        ################################################################################
+        p2 = fig.add_subplot(grids[plot_id+1])
+
+        l1, = p2.plot(mTime(cpu), mData(cpu, 'Src'), 'r+ ')
+        l2, = p2.plot(mTime(cpu), mData(cpu, 'Dst'), 'g+ ')
+
+        # Setup X-Axis
+        # p1.set_xlabel("Time [s]")
+        p2.set_ylabel('[CPU]')
+        p2.set_ylim(ymin=0, ymax=16)
+
+        # Setup Graph title
+        p2.set_title('Departing Arriving CPUs')
+        p2.grid(True)
+
+        # Add legend
+        p2.legend([l1, l2], ['Dep', 'Arr'], prop={'size':fsize})
+
+        plot_id += 2
+
+        for item in (
+            [p1.title, p1.xaxis.label, p1.yaxis.label]  +
+            [p2.title, p2.xaxis.label, p2.yaxis.label]  +
+            p1.get_xticklabels() + p1.get_yticklabels() +
+            p2.get_xticklabels() + p2.get_yticklabels()):
+            item.set_fontsize(fsize)
+
+    # Plot the graph...
+    if show_plot:
+        plt.show()
+    else:
+        migrations_figure = string.replace(migrations_data, ".dat", ".pdf")
+        # print "Plotting [", migrations_figure, "]..."
+        plt.savefig(
+                migrations_figure,
+                orientation = 'portrait',
+                format = 'pdf',
+                )
+
+# Reset plot data DB
+data = {}
+delta_stats = {}
+for migrations_data in glob.glob('*_table_*_migrations.dat'):
+    print "Parsing migrations [", migrations_data, "]..."
+    parse_migrations(migrations_data)
+
+#print "Columns: ", mColumns
+#print "CPUs: ", len(data.keys())
+
+match = migcpu_regex.search(migrations_data)
+cpu_id = 'C' + match.group('cpu_id')
+migrations_data = string.replace(migrations_data, cpu_id, "Call")
+print "Plotting migrations [", migrations_data, "]..."
+plot_migrations()
