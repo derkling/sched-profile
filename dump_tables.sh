@@ -10,6 +10,7 @@ CPUID=`printf "%02d" $CPU`
 RNDFILE=${TABFILE/.dat/_C${CPUID}_rounds.dat}
 BRSFILE=${TABFILE/.dat/_C${CPUID}_bursts.dat}
 LTSFILE=${TABFILE/.dat/_C${CPUID}_latencies.dat}
+MIGFILE=${TABFILE/.dat/_C${CPUID}_migrations.dat}
 EVTFILE=${TABFILE/.dat/_C${CPUID}_events.dat}
 AEVFILE=${TABFILE/.dat/_Call_events.dat}
 
@@ -99,6 +100,52 @@ trace-cmd report --cpu $CPU $DATFILE 2>/dev/null | \
 	> $LTSFILE
 
 fi # EVENTS == *_process_latency*
+
+################################################################################
+### Migration parsing
+if [[ "$EVENTS" == *_migrate_task* ]]; then
+
+cat > parse_migrations.awk <<EOF
+#!/usr/bin/awk -f
+BEGIN {
+	printf("# Task Migrations\\n")
+	printf("# %5s %19s %3s %14s %14s %3s %3s\\n",
+		"Count", "Task", "I/O", "Time[s]", "Delta[us]", "Src", "Dst")
+	last_migration = 0
+}
+/sched_migrate_task/ {
+	#print ">>>>> " \$0
+	# Get number of current CPU
+	CPU=\$2+0
+	# Consider only migrations in or out the current CPU
+	if (CPU!=\$12 && CPU!=\$14)
+		next
+	# Discard migration events on the same CPU
+	if (\$12==\$14)
+		next
+	# Keep track of first migration
+	if (last_migration==0) {
+		last_migration = \$3
+		next
+	}
+	# Report delta since last migration
+	if (CPU==\$12)
+		migration="out"
+	else
+		migration="in"
+	delta = \$3 - last_migration
+	printf(" %5d %20s %3s %14.6f %14.6f %03d %03d\\n",
+		++i, \$6, migration, \$3, delta, \$12, \$14)
+	last_migration = \$3
+}
+EOF
+chmod a+x parse_migrations.awk
+
+trace-cmd report --cpu $CPU $DATFILE 2>/dev/null | \
+	tr '|[]=' ' ' | ./parse_migrations.awk \
+	> $MIGFILE
+
+fi # EVENTS == *_migrate_task*
 
 
 ################################################################################
