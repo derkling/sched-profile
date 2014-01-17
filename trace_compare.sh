@@ -7,6 +7,9 @@
 # The tag to append to the output data filenames
 TAG=${TAG:-"NONE"}
 
+# The scheduler to run the test for
+SCHED=${SCHED:-"all"}
+
 # Numer of instences to run concurrently
 CINTS=${CINTS:-1}
 
@@ -36,7 +39,6 @@ CPUS=${CPUS:-`cat /sys/fs/cgroup/sbox/cpuset.cpus`}
 TESTD=${TESTD:-`pwd`}
 CHRT=${CHRT:-/home/derkling/bin/chrt}
 TERM=${TERM:-gnome-terminal}
-
 
 COLOR_WHITE="\033[1;37m"
 COLOR_LGRAY="\033[37m"
@@ -268,11 +270,15 @@ EOF
 trace_multi() {
   log_info "[CONF] Running [$TAG] tests with [$CINTS] instances..."
 
-  trace_setup
-  test_cbs
-  trace_reset
+  if [[ "$SCHED" == all || "$SCHED" == *cbs* || \
+	  "$TRACER" != "" ]]; then
+    trace_setup
+    test_cbs
+    trace_reset
+  fi
 
-  if [[ "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
+  if [[ "$SCHED" == all || "$SCHED" == *fair* || \
+	  "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
     trace_setup
     test_fair
     trace_reset
@@ -390,19 +396,23 @@ log_title1 "Trace Compare"
 
 trace_multi
 
-#report_sched_latency cb
-#report_sched_time cbs
-tar cjf cbs_trace_$TAG.tar.bz2 \
-	cbs_trace_$TAG.txt \
-	cbs_trace_$TAG.log \
-	cbs_trace_$TAG.dat \
-	dump_tables.sh \
-	plot_tables.py
+if [[ "$SCHED" == all || "$SCHED" == *cbs* || \
+	"$TRACER" != "" ]]; then
+  #report_sched_latency cb
+  #report_sched_time cbs
+  tar cjf cbs_trace_$TAG.tar.bz2 \
+	  cbs_trace_$TAG.txt \
+	  cbs_trace_$TAG.log \
+	  cbs_trace_$TAG.dat \
+	  dump_tables.sh \
+	  plot_tables.py
 
-cat decompressor cbs_trace_$TAG.tar.bz2 > results_cbs_$TAG.bsx
-chmod a+x results_cbs_$TAG.bsx
+  cat decompressor cbs_trace_$TAG.tar.bz2 > results_cbs_$TAG.bsx
+  chmod a+x results_cbs_$TAG.bsx
+fi
 
-if [[ "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
+if [[ "$SCHED" == all || "$SCHED" == *fair* || \
+	"$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
   #report_sched_latency fair
   #report_sched_time fair
   tar cjf fair_trace_$TAG.tar.bz2 \
