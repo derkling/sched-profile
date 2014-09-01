@@ -295,7 +295,10 @@ test_cbs() {
         taskset -c ${CPUS}
         $CHRT -c 0
         $BENCH"
+
+  trace_setup
   test_sched $RESULTS
+  trace_reset
 }
 
 test_fair() {
@@ -305,7 +308,10 @@ test_fair() {
         taskset -c ${CPUS}
         $CHRT -o 0
         $BENCH"
+
+  trace_setup
   test_sched $RESULTS
+  trace_reset
 }
 
 
@@ -318,16 +324,12 @@ trace_multi() {
 
   if [[ "$SCHED" == all || "$SCHED" == *cbs* || \
 	  "$TRACER" != "" ]]; then
-    trace_setup
     test_cbs
-    trace_reset
   fi
 
   if [[ "$SCHED" == all || "$SCHED" == *fair* || \
 	  "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
-    trace_setup
     test_fair
-    trace_reset
   fi
 
 }
