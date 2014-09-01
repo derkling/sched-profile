@@ -87,6 +87,21 @@ BEGIN {
 	printf("# %5s %25s %13s %13s %13s %3s\\n",
 		"Burst", "Task", "Time[s]", "Delay[ns]", "Slice[ns]", "CPU")
 }
+
+/kswitcher_0-(.*)cpu_migrate_finish/ {
+	target = \$8
+	sub("0x", "", target)
+	printf("################################################################################\n")
+	printf("# %s\\n", \$0)
+	if (target < 100) {
+		cpu_base = 0
+		printf("# Switched to [big] cluster\\n")
+	} else {
+		cpu_base = 4
+		printf("# Switched to [LITTLE] cluster\\n")
+	}
+}
+
 /sched_process_latency/ {
 	task=\$1
 	cpu=\$2+cpu_base
