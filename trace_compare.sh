@@ -265,6 +265,29 @@ EOF
 ### Scheduler specific testing
 ################################################################################
 
+test_sched() {
+  RESULTS=$1 # The basename for experiment produced filenames
+
+  log_info "[TEST] Running [$TAG] on ${SCHED^^} scheduler..."
+  pushd $TESTD
+  JOBS=''
+
+  trace_start "$CMD"
+  for I in `seq $CINTS`; do
+    $CMD | tee ${RESULTS}.log &
+    JOBS+="`echo $!` "
+    echo -en "$I instances running...\r"
+  done
+  popd
+
+  log_debug "Waiting for tests PIDs: $JOBS..."
+  wait $JOBS
+  trace_stop
+
+  trace_collect $RESULTS
+
+}
+
 test_cbs() {
   log_info "[TEST] Running [$TAG] on CBS scheduler..."
   pushd $TESTD
