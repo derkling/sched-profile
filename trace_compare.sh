@@ -289,51 +289,23 @@ test_sched() {
 }
 
 test_cbs() {
-  log_info "[TEST] Running [$TAG] on CBS scheduler..."
-  pushd $TESTD
-  JOBS=''
+  SCHED=cbs
+  RESULTS="cbs_trace_$TAG"
   CMD="$CHRT -f 10
         taskset -c ${CPUS}
         $CHRT -c 0
         $BENCH"
-  trace_start "$CMD"
-  for I in `seq $CINTS`; do
-    $CMD | tee cbs_trace_$TAG.log &
-    JOBS+="`echo $!` "
-    echo -en "$I instances running...\r"
-  done
-  popd
-
-  log_debug "Waiting for tests PIDs: $JOBS..."
-  wait $JOBS
-  trace_stop
-
-  trace_collect cbs_trace_$TAG
-
+  test_sched $RESULTS
 }
 
 test_fair() {
-  log_info "[TEST] Running [$TAG] on FAIR scheduler..."
-  pushd $TESTD
-  JOBS=''
+  SCHED=fair
+  RESULTS="fair_trace_$TAG"
   CMD="$CHRT -f 10
         taskset -c ${CPUS}
         $CHRT -o 0
         $BENCH"
-  trace_start "$CMD"
-  for I in `seq $CINTS`; do
-    $CMD | tee fair_trace_$TAG.log &
-    JOBS+="`echo $!` "
-    echo -en "$I instances running...\r"
-  done
-  popd
-
-  log_debug "Waiting for tests PIDs: $JOBS..."
-  wait $JOBS
-  trace_stop
-
-  trace_collect fair_trace_$TAG
-
+  test_sched $RESULTS
 }
 
 
