@@ -382,49 +382,149 @@ metrics = {
  'Time':      [ 'Time [s]',             'Burst completion time [s]',   2,      0],
  'Delay':     [ 'Delay [ns]',           'Ready task RQ delay [ns]',    3,      1],
  'Slice':     [ 'Slice [ns]',           'Running task CPU slice [ns]', 4,      2],
+ 'CPU':       [ 'CPU',                  'CPU Latency [ns]',            5,      3],
 }
 mColumns = [c[2] for c in metrics.values()]
 
+# Overall statistics on big tasks
+data = {}
+delay_stats = {}
+slice_stats = {}
+# Per task statistics
+tasks_data = {}
+tasks_delay_stats = {}
+tasks_slice_stats = {}
+# Per cpu statistics
+cpus_data = {}
+cpus_delay_stats = {}
+cpus_slice_stats = {}
+
+# Metrics access utilities
+def mName(m):
+    return metrics[m][0]
+def mDesc(m):
+    return metrics[m][1]
+def mData(view,t,m):
+    idx = metrics[m][3]
+    if view=='Tasks':
+        return [d[idx] for d in tasks_data[t]]
+    if view=='Cpus':
+        return [d[idx] for d in cpus_data[t]]
+    # by default, return overall metrics
+    return [d[idx] for d in data[t]]
+def mStats(view, metric, plot_id):
+    if (view == 'Tasks'):
+        if (metric == 'Delay'):
+            return tasks_delay_stats[plot_id].get_stats()
+        return tasks_slice_stats[plot_id].get_stats()
+    if (view == 'Cpus'):
+        if (metric == 'Delay'):
+            return cpus_delay_stats[plot_id].get_stats()
+        return cpus_slice_stats[plot_id].get_stats()
+    # By default, return overall metrics
+    if (metric == 'Delay'):
+        return delay_stats[plot_id].get_stats()
+    return slice_stats[plot_id].get_stats()
+def mTime(view, t):
+    idx = metrics['Time'][3]
+    if (view == 'Tasks'):
+        return [d[idx] for d in tasks_data[t]]
+    if (view == 'Cpus'):
+        return [d[idx] for d in cpus_data[t]]
+    return [d[idx] for d in data[t]]
+
+
+
 def plot_latencies(latencies_data):
-    global data
+    global data, delay_stats, slice_stats
+    global tasks_data, tasks_delay_stats, tasks_slice_stats
+    global cpus_data, cpus_delay_stats, cpus_slice_stats
+
+    # # Load big-tasks list
+    # Initialize overall data
+    data['Overall'] = []
+    delay_stats['Overall'] = Stats()
+    slice_stats['Overall'] = Stats()
 
     # Data Loading loop
     time_start = 0;
-    data = {}
-    delay_stats = {}
-    slice_stats = {}
     infile = open(latencies_data, 'r')
     # infile = open('test.dat', 'r')
     for line in infile:
         if line[0] == '#':
             continue
         values = str.split(line)
-        e = values[1]
+        task = values[1]
         m = [values[i] for i in sorted(mColumns)]
-        if (e not in data.keys()):
-            data[e] = []
-            delay_stats[e] = Stats()
-            slice_stats[e] = Stats()
-        data[e].append(m)
-        # print "Data: ", m, "Delay: ", metrics['Delay'][3], " => ", float(m[metrics['Delay'][3]])
-        delay_stats[e].add_sample(float(m[metrics['Delay'][3]]))
-        slice_stats[e].add_sample(float(m[metrics['Slice'][3]]))
+        data['Overall'].append(m)
+
+        mdelay = float(m[metrics['Delay'][3]])
+        mslice = float(m[metrics['Slice'][3]])
+        delay_stats['Overall'].add_sample(mdelay)
+        slice_stats['Overall'].add_sample(mslice)
+
+        # per TASK stats
+        if (task not in tasks_data.keys()):
+            tasks_data[task] = []
+            tasks_delay_stats[task] = Stats()
+            tasks_slice_stats[task] = Stats()
+        tasks_data[task].append(m)
+        tasks_delay_stats[task].add_sample(mdelay)
+        tasks_slice_stats[task].add_sample(mslice)
+
+        # per CPU stats
+        cpu = m[metrics['CPU'][3]]
+        if (cpu not in cpus_delay_stats.keys()):
+            cpus_data[cpu] = []
+            cpus_delay_stats[cpu] = Stats()
+            cpus_slice_stats[cpu] = Stats()
+        cpus_data[cpu].append(m)
+        cpus_delay_stats[cpu].add_sample(mdelay)
+        cpus_slice_stats[cpu].add_sample(mslice)
+
         if (time_start == 0):
             time_start = m[1]
 
+    if (len(data['Overall']) == 0):
+        print "   No data collected for [" + latencies_data + "]"
+        return
+
+    plot_latencies_per(latencies_data, 'Tasks')
+    plot_latencies_per(latencies_data, 'Cpus')
+    plot_latencies_per(latencies_data, 'Overall')
+
     # print data
-    # print mData('hb_ctl-32254', 'BT')
-    # print mData('hb_tx_001_00-32276', 'Time')
-    # print "Applications: ", len(data.keys())
+    # print mData('Task', 'hb_ctl-32254', 'BT')
+    # print mData('Task', 'hb_tx_001_00-32276', 'Time')
+    # print "Applications: ", len(tasks_data.keys())
 
     # print "Columns: ", mColumns
-    # print "Data: ", mData('wlg-3818', "Tb_sp")
+    # print "Data: ", mData('Task', 'wlg-3818', "Tb_sp")
     # exit(0)
 
-    tasks_count = len(data.keys())
+def plot_latencies_per(latencies_data, view):
+    global data, delay_stats, slice_stats
+    global tasks_data, tasks_delay_stats, tasks_slice_stats
+    global cpus_data, cpus_delay_stats, cpus_slice_stats
+
+    if (view == 'Tasks'):
+        plot_data = tasks_data
+    elif (view == 'Cpus'):
+        plot_data = cpus_data
+    else:
+        plot_data = data
+
+
+    # Setup output names
+    latencies_figure = string.replace(latencies_data, '.dat', '_'+view.lower()+'.pdf')
+
+    # Compute number of plots in that view
+    plots_count = len(plot_data.keys())
+    if (plots_count == 1):
+        plots_count = 3
 
     # Setup figure geometry
-    fig_size = (720, tasks_count * 720 / 5)
+    fig_size = (720, plots_count * 720 / 5)
     fig_dpi = 300
     fig_inches  = (
         5 * fig_size[0] / fig_dpi,
@@ -434,7 +534,7 @@ def plot_latencies(latencies_data):
     # Setup figure
     fig = plt.figure(figsize=fig_inches, dpi=fig_dpi)
 
-    grids = gs.GridSpec(tasks_count, 2)
+    grids = gs.GridSpec(plots_count, 2)
     fig.subplots_adjust(
         left   = 0.10,
         bottom = 0.05,
@@ -444,24 +544,22 @@ def plot_latencies(latencies_data):
         hspace = 0.30,
     )
 
-    # Application specifica data plotting
+    # Application specific data plotting
     plot_id = 0
-    for task in sorted(data.keys()):
+    for plot_key in sorted(plot_data.keys()):
 
-        # print 'Plotting taks: ', task, ' @ time: ', mTime(task)
-        # print 'Delay', mData(task, 'Delay')
-        # print 'Slice', mData(task, 'Slice')
+        # print 'Plotting [',view, ']: ', plot_key, ' @ time: ', mTime(view, plot_key)
+        # print 'Delay', mData(view, plot_key, 'Delay')
+        # print 'Slice', mData(view, plot_key, 'Slice')
 
         ################################################################################
-        # Plot Round Time SP and Measured
+        # Plot Tasks Delay (once ready to run)
         ################################################################################
         p1 = fig.add_subplot(grids[plot_id])
 
-        l1, = p1.plot(mTime(task), mData(task, 'Delay'), 'r+ ')
-        # print 'Taks (' + task + ') Delay: ', mData(task, 'Delay')
+        l1, = p1.plot(mTime(view, plot_key), mData(view, plot_key, 'Delay'), 'r+ ')
 
-        # print "Delay(", task, "): ", delay_stats[task].get_stats()
-        (count, avg, var, std, ste, c95, c99) = delay_stats[task].get_stats()
+        (count, avg, var, std, ste, c95, c99) = mStats(view, 'Delay', plot_key)
         plt.axhline(y=avg, linewidth=1, color='g')
         plt.axhspan(max(1,avg-c99), avg+c99, facecolor='g', alpha=0.2)
         plt.axhspan(max(1,avg-(2*std)), avg+(2*std), facecolor='y', alpha=0.1)
@@ -474,21 +572,19 @@ def plot_latencies(latencies_data):
         p1.set_yscale('log')
 
         # Setup Graph title
-        p1.set_title('Ready Task RQ Delay (' + task +')')
+        p1.set_title('Task(s) RQ Delay (' + plot_key +')')
         p1.grid(True)
 
         # Add legend
-        p1.legend([l1], ['RQ Delay'], prop={'size':fsize})
+        # p1.legend([l1], ['RQ Delay'], prop={'size':fsize})
 
         ################################################################################
-        # Plot Round Time Error and Next
+        # Plot Tasks Timeslice
         ################################################################################
         p2 = fig.add_subplot(grids[plot_id+1])
 
-        l1, = p2.plot(mTime(task), mData(task, 'Slice'), 'b+ ')
-        # print 'Taks (' + task + ') Slice: ', mData(task, 'Slice')
-        # print "Slice(", task, "): ", slice_stats[task].get_stats()
-        (count, avg, var, std, ste, c95, c99) = slice_stats[task].get_stats()
+        l1, = p2.plot(mTime(view, plot_key), mData(view, plot_key, 'Slice'), 'b+ ')
+        (count, avg, var, std, ste, c95, c99) = mStats(view, 'Slice', plot_key)
         plt.axhline(y=avg, linewidth=1, color='g')
         plt.axhspan(max(1,avg-c99), avg+c99, facecolor='g', alpha=0.2)
         plt.axhspan(max(1,avg-(2*std)), avg+(2*std), facecolor='y', alpha=0.1)
@@ -501,11 +597,11 @@ def plot_latencies(latencies_data):
         p2.set_yscale('log')
 
         # Setup Graph title
-        p2.set_title('Running Task Slice (' + task + ')')
+        p2.set_title('Task(s) Running Slice (' + plot_key + ')')
         p2.grid(True)
 
         # Add legend
-        p2.legend([l1], ['CPU Slice'], prop={'size':fsize})
+        #p2.legend([l1], ['CPU Slice'], prop={'size':fsize})
 
         plot_id += 2
 
@@ -520,7 +616,7 @@ def plot_latencies(latencies_data):
     if show_plot:
         plt.show()
     else:
-        latencies_figure = string.replace(latencies_data, ".dat", ".pdf")
+        latencies_figure = string.replace(latencies_data, '.dat', '_'+view.lower()+'.pdf')
         # print "Plotting [", latencies_figure, "]..."
         plt.savefig(
                 latencies_figure,
@@ -528,7 +624,8 @@ def plot_latencies(latencies_data):
                 format = 'pdf',
                 )
 
-for latencies_data in glob.glob('*_table_*_latencies.dat'):
+# Plotting tasks latencies
+for latencies_data in glob.glob('**_latencies.dat'):
     print "Plotting latencies [", latencies_data, "]..."
     plot_latencies(latencies_data)
 
