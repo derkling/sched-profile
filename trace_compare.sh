@@ -111,6 +111,67 @@ sbox_to_cpulist() {
 sbox_to_cpulist
 
 ################################################################################
+# CPUFreq Utilities
+################################################################################
+
+set_cpufreq() {
+
+  case $1 in
+    d) GOV='ondemand'
+      ;;
+    i) GOV='interactive'
+      ;;
+    p) GOV='performance'
+      ;;
+    s) GOV='powersave'
+      ;;
+    u) GOV='userspace'
+      ;;
+    *) echo "Invalid CPUFreq setup [$1]"
+      exit 1
+      ;;
+  esac
+
+  # Requested frequency for on-demand governor
+  # if not speficied the minimum frequency will be configured
+  FREQ=${2:-0}
+
+  CUR=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+
+  check_root
+
+  CPUS=`grep processor /proc/cpuinfo | cut -d: -f2`
+
+  if [ $CUR != $GOV ]; then
+    echo "Setting CPUfreq governor to [$GOV]..."
+    local P
+    for P in $CPUS; do
+      echo $GOV > /sys/devices/system/cpu/cpu$P/cpufreq/scaling_governor
+    done
+  fi
+
+  if [ $GOV == "userspace" ]; then
+    echo "Setting CPUfreq userspace frequency to [$FREQ]..."
+    local P
+    for P in $CPUS; do
+      echo $FREQ > /sys/devices/system/cpu/cpu$P/cpufreq/scaling_setspeed
+    done
+  fi
+
+  echo "CPUFreq Configuration:"
+  local P
+  for P in $CPUS; do
+    GOV=$(cat /sys/devices/system/cpu/cpu$P/cpufreq/scaling_governor)
+    FRQ=$(cat /sys/devices/system/cpu/cpu$P/cpufreq/scaling_cur_freq)
+    AVL=$(cat /sys/devices/system/cpu/cpu$P/cpufreq/scaling_available_frequencies)
+    echo "CPU$P: $GOV @ $FRQ ($AVL)"
+  done
+
+}
+
+
+
+################################################################################
 ### FTrace Utility Functions
 ################################################################################
 
