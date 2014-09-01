@@ -233,6 +233,33 @@ trace_reset() {
   fi
 }
 
+trace_collect() {
+  RESULTS=$1 # The basename for trace and report filenames
+
+  trace-cmd extract &>/dev/null
+  mv trace.dat $RESULTS.dat
+  cat > $RESULTS.txt <<EOF
+################################################################################
+# Date:    `date`
+# System:  `uname -a`
+# CPUs:    $CPULIST
+# CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
+# CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
+# Sched Features:
+`[[ ! -f /sys/kernel/debug/sched_features ]] || cat /sys/kernel/debug/sched_features`
+# Traced Events:
+$EVENTS
+################################################################################
+# TAG:
+$TAG
+# BENCHMARK:
+$BENCH
+# COMMAND:
+$CMD
+EOF
+
+}
+
 
 ################################################################################
 ### Scheduler specific testing
@@ -257,27 +284,8 @@ test_cbs() {
   log_debug "Waiting for tests PIDs: $JOBS..."
   wait $JOBS
   trace_stop
-  trace-cmd extract &>/dev/null
-  mv trace.dat cbs_trace_$TAG.dat
-  cat > cbs_trace_$TAG.txt <<EOF
-################################################################################
-# Date:    `date`
-# System:  `uname -a`
-# CPUs:    $CPULIST
-# CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
-# CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
-# Sched Features:
-`[[ ! -f /sys/kernel/debug/sched_features ]] || cat /sys/kernel/debug/sched_features`
-# Traced Events:
-$EVENTS
-################################################################################
-# TAG:
-$TAG
-# BENCHMARK:
-$BENCH
-# COMMAND:
-$CMD
-EOF
+
+  trace_collect cbs_trace_$TAG
 
 }
 
@@ -300,27 +308,8 @@ test_fair() {
   log_debug "Waiting for tests PIDs: $JOBS..."
   wait $JOBS
   trace_stop
-  trace-cmd extract &>/dev/null
-  mv trace.dat fair_trace_$TAG.dat
-  cat > fair_trace_$TAG.txt <<EOF
-################################################################################
-# Date:    `date`
-# System:  `uname -a`
-# CPUs:    $CPULIST
-# CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
-# CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
-# Sched Features:
-`[[ ! -f /sys/kernel/debug/sched_features ]] || cat /sys/kernel/debug/sched_features`
-# Traced Events:
-$EVENTS
-################################################################################
-# TAG:
-$TAG
-# BENCHMARK:
-$BENCH
-# COMMAND:
-$CMD
-EOF
+
+  trace_collect fair_trace_$TAG
 
 }
 
