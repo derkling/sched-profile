@@ -259,6 +259,8 @@ trace_collect() {
 # Traced Events:
 $EVENTS
 ################################################################################
+# SCHED:
+$SCHED
 # TAG:
 $TAG
 # BENCHMARK:

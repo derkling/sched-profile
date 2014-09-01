@@ -22,6 +22,7 @@ grep -A1 "$1" $TXTFILE | tail -n1
 }
 
 EVENTS=`get_test_configuration "Traced Events:"`
+SCHED=`get_test_configuration "# SCHED:"`
 BTAG=`get_test_configuration "# TAG:"`
 BCMD=`get_test_configuration "# BENCHMARK:"`
 
@@ -115,11 +116,17 @@ BEGIN {
 EOF
 chmod a+x parse_latencies.awk
 
+if [[ $SCHED == iks ]]; then
+	# NOTE: the trace is started while running on the [LITTLE] cluster
+    # Thus, initialli CPU0 corresponds to the physical CPU4 (first LITTLE core)
+    CPU_BASE='-v cpu_base=4'
+fi
+
 # Latencies are dumped in a single file for all CPUs
 LTSFILE=${TABFILE/.dat/_Call_latencies.dat}
 [[ -f $LTSFILE ]] || \
 trace-cmd report $DATFILE 2>/dev/null | \
-	tr '|[]=' ' ' | ./parse_latencies.awk \
+	tr '|[]=' ' ' | ./parse_latencies.awk $CPU_BASE \
 	> $LTSFILE
 
 cat > parse_ctx_switches.awk <<EOF
