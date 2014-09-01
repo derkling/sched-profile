@@ -322,12 +322,12 @@ test_fair() {
 trace_multi() {
   log_info "[CONF] Running [$TAG] tests with [$CINTS] instances..."
 
-  if [[ "$SCHED" == all || "$SCHED" == *cbs* || \
+  if [[ "$SCHED" == cbscomp || "$SCHED" == *cbs* || \
 	  "$TRACER" != "" ]]; then
     test_cbs
   fi
 
-  if [[ "$SCHED" == all || "$SCHED" == *fair* || \
+  if [[ "$SCHED" == cbscomp || "$SCHED" == *fair* || \
 	  "$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
     test_fair
   fi
