@@ -446,32 +446,27 @@ trace_multi
 
 if [[ "$SCHED" == all || "$SCHED" == *cbs* || \
 	"$TRACER" != "" ]]; then
+  log_info "CBS Summmary"
   #report_sched_latency cb
   #report_sched_time cbs
-  tar cjf cbs_trace_$TAG.tar.bz2 \
-	  cbs_trace_$TAG.txt \
-	  cbs_trace_$TAG.log \
-	  cbs_trace_$TAG.dat \
-	  dump_tables.sh \
-	  plot_tables.py
-
-  cat decompressor cbs_trace_$TAG.tar.bz2 > results_cbs_$TAG.bsx
-  chmod a+x results_cbs_$TAG.bsx
 fi
 
 if [[ "$SCHED" == all || "$SCHED" == *fair* || \
 	"$EVENTS" == *sched:* || "$TRACER" != "" ]]; then
+  log_info "FAIR Summary"
   #report_sched_latency fair
   #report_sched_time fair
-  tar cjf fair_trace_$TAG.tar.bz2 \
-	  fair_trace_$TAG.txt \
-	  fair_trace_$TAG.log \
-	  fair_trace_$TAG.dat \
-	  dump_tables.sh \
-	  plot_tables.py
-  cat decompressor fair_trace_$TAG.tar.bz2 > results_fair_$TAG.bsx
-  chmod a+x results_fair_$TAG.bsx
 fi
 
+# Packing test results
+tar cjf ${SCHED,,}_trace_$TAG.tar.bz2 \
+        ${SCHED,,}_trace_$TAG.txt \
+        ${SCHED,,}_trace_$TAG.log \
+        ${SCHED,,}_trace_$TAG.dat \
+        dump_tables.sh \
+        plot_tables.py
+cat decompressor ${SCHED,,}_trace_$TAG.tar.bz2 > results_${SCHED,,}_$TAG.bsx
+chmod a+x results_${SCHED,,}_$TAG.bsx
+log_info "Test results: results_${SCHED,,}_$TAG.bsx"
 sleep 1
 echo -e "\n\n\n"
