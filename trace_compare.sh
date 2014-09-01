@@ -525,5 +525,9 @@ tar cjf ${SCHED,,}_trace_$TAG.tar.bz2 \
 cat decompressor ${SCHED,,}_trace_$TAG.tar.bz2 > results_${SCHED,,}_$TAG.bsx
 chmod a+x results_${SCHED,,}_$TAG.bsx
 log_info "Test results: results_${SCHED,,}_$TAG.bsx"
+
+# Cleanup packaged files
+rm -f ${SCHED,,}_*
+
 sleep 1
 echo -e "\n\n\n"
