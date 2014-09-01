@@ -281,7 +281,21 @@ test_sched() {
   pushd $TESTD
   JOBS=''
 
+  if [[ $SCHED==iks ]]; then
+    # Force system on powersave to know in which OP we are starting the execution
+    set_cpufreq s
+  fi
+
+  # Start tracing
   trace_start "$CMD"
+
+  if [[ $SCHED==iks ]]; then
+    # Switch back to interactive governor once the trace has been started, thus
+    # get all the cluster UP migrations on the trace
+    set_cpufreq i
+    sleep 1
+  fi
+
   for I in `seq $CINTS`; do
     $CMD | tee ${RESULTS}.log &
     JOBS+="`echo $!` "
@@ -323,6 +337,18 @@ test_fair() {
   trace_reset
 }
 
+test_iks() {
+  CMD="$BENCH"
+  CPUS='0-7'
+  EVENTS='cpu_migrate_finish sched_process_latency'
+  RESULTS="iks_trace_$TAG"
+  SCHED=iks
+
+  trace_setup
+  test_sched $RESULTS
+  trace_reset
+}
+
 
 ################################################################################
 ### Test Function
@@ -330,6 +356,10 @@ test_fair() {
 
 trace_multi() {
   log_info "[CONF] Running [$TAG] tests with [$CINTS] instances..."
+
+  if [[ "$SCHED" == *iks* ]]; then
+    test_iks
+  fi
 
   if [[ "$SCHED" == cbscomp || "$SCHED" == *cbs* || \
 	  "$TRACER" != "" ]]; then
