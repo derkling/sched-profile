@@ -84,18 +84,26 @@ cat > parse_latencies.awk <<EOF
 #!/usr/bin/awk -f
 BEGIN {
 	printf("# Scheduling Latency\\n")
-	printf("# %5s %19s %13s %13s %13s\\n",
-		"Burst", "Task", "Time[s]", "Delay[ns]", "Slice[ns]")
+	printf("# %5s %25s %13s %13s %13s %3s\\n",
+		"Burst", "Task", "Time[s]", "Delay[ns]", "Slice[ns]", "CPU")
 }
 /sched_process_latency/ {
+	task=\$1
+	cpu=\$2+cpu_base
+	timestamp=\$3
+	delay=\$6
+	slice=\$8
 	#print ">>>>> " \$0
-	printf(" %5d %20s %13.6f %13d %13d\\n",
-		++i, \$1, \$3, \$6, \$8)
+	printf("%7d %25s %13.6f %13d %13d %3d\\n",
+		++i, task, timestamp, delay, slice, cpu)
 }
 EOF
 chmod a+x parse_latencies.awk
 
-trace-cmd report --cpu $CPU $DATFILE 2>/dev/null | \
+# Latencies are dumped in a single file for all CPUs
+LTSFILE=${TABFILE/.dat/_Call_latencies.dat}
+[[ -f $LTSFILE ]] || \
+trace-cmd report $DATFILE 2>/dev/null | \
 	tr '|[]=' ' ' | ./parse_latencies.awk \
 	> $LTSFILE
 
