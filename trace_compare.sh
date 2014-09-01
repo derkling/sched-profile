@@ -181,8 +181,6 @@ OPTIONS=${OPTIONS:-print-parent sleep-time graph-time funcgraph-duration funcgra
 
 trace_setup() {
 
-  log_info "[CONF] Setup FTrace [128K] buffer size..."
-  echo 131072 > $TRACING/buffer_size_kb
   # Tracer
   if [ "x$TRACER" != "x" ]; then
     log_info "[CONF] Setup FTrace [$TRACER] tracer..."
@@ -211,6 +209,9 @@ trace_setup() {
 trace_start() {
   log_warn "===== Trace START ====="
   log_info "Command [$1]"
+  echo 1 > $TRACING/free_buffer
+  log_info "[CONF] Setup FTrace [10M] buffer size..."
+  echo 10240 > $TRACING/buffer_size_kb
   echo 1 > $TRACING/tracing_on
 }
 
