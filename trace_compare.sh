@@ -278,12 +278,17 @@ test_sched() {
   RESULTS=$1 # The basename for experiment produced filenames
 
   log_info "[TEST] Running [$TAG] on ${SCHED^^} scheduler..."
-  pushd $TESTD
-  JOBS=''
 
   if [[ $SCHED==iks ]]; then
     # Force system on powersave to know in which OP we are starting the execution
     set_cpufreq s
+  fi
+
+  if [[ "x$CMD"="x" ]]; then
+    log_info "Press a key to START the test: "
+    read KEY
+    # Manual test (start)
+    echo 'Manual triggered caputre' > ${SCHED,,}_trace_$TAG.log
   fi
 
   # Start tracing
@@ -296,15 +301,23 @@ test_sched() {
     sleep 1
   fi
 
-  for I in `seq $CINTS`; do
-    $CMD | tee ${RESULTS}.log &
-    JOBS+="`echo $!` "
-    echo -en "$I instances running...\r"
-  done
-  popd
+  if [[ "x$CMD"="x" ]]; then
+    log_info "Press a key to STOP the test: "
+    read KEY
+    # Manual test (stop)
+  else
+    pushd $TESTD
+    JOBS=''
+    for I in `seq $CINTS`; do
+      $CMD | tee ${RESULTS}.log &
+      JOBS+="`echo $!` "
+      echo -en "$I instances running...\r"
+    done
+    popd
+    log_debug "Waiting for tests PIDs: $JOBS..."
+    wait $JOBS
+  fi
 
-  log_debug "Waiting for tests PIDs: $JOBS..."
-  wait $JOBS
   trace_stop
 
   trace_collect $RESULTS
