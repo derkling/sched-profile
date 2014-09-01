@@ -349,6 +349,19 @@ test_iks() {
   trace_reset
 }
 
+test_hmp() {
+  CMD="$BENCH"
+  CPUS='0-7'
+  # EVENTS='sched_wakeup sched_switch cpu_migrate_finish sched_task_runnable_ratio sched_process_fork sched_process_free'
+  EVENTS='sched_process_latency'
+  RESULTS="hmp_trace_$TAG"
+  SCHED=hmp
+
+  trace_setup
+  test_sched $RESULTS
+  trace_reset
+}
+
 
 ################################################################################
 ### Test Function
@@ -356,6 +369,11 @@ test_iks() {
 
 trace_multi() {
   log_info "[CONF] Running [$TAG] tests with [$CINTS] instances..."
+
+
+  if [[ "$SCHED" == *hmp* ]]; then
+    test_hmp
+  fi
 
   if [[ "$SCHED" == *iks* ]]; then
     test_iks
