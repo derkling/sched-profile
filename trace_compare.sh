@@ -114,6 +114,15 @@ sbox_to_cpulist
 # CPUFreq Utilities
 ################################################################################
 
+# Check root permission
+check_root() {
+  # Make sure only root can run our script
+  if [ "x`id -u`" != "x0" ]; then
+    echo -e "ERROR: This script must be run as root\n\n"
+    exit 1
+  fi
+}
+
 set_cpufreq() {
 
   case $1 in
