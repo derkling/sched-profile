@@ -267,7 +267,7 @@ test_cbs() {
 # CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
 # CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
 # Sched Features:
-`cat /sys/kernel/debug/sched_features`
+`[[ ! -f /sys/kernel/debug/sched_features ]] || cat /sys/kernel/debug/sched_features`
 # Traced Events:
 $EVENTS
 ################################################################################
@@ -310,7 +310,7 @@ test_fair() {
 # CPUFreq: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor  | sort -u`
 # CPU Hz:  `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq  | sort -u`
 # Sched Features:
-`cat /sys/kernel/debug/sched_features`
+`[[ ! -f /sys/kernel/debug/sched_features ]] || cat /sys/kernel/debug/sched_features`
 # Traced Events:
 $EVENTS
 ################################################################################
