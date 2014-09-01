@@ -804,8 +804,10 @@ for migrations_data in glob.glob('*_table_*_migrations.dat'):
 #print "Columns: ", mColumns
 #print "CPUs: ", len(data.keys())
 
-match = migcpu_regex.search(migrations_data)
-cpu_id = 'C' + match.group('cpu_id')
-migrations_data = string.replace(migrations_data, cpu_id, "Call")
-print "Plotting migrations [", migrations_data, "]..."
-plot_migrations()
+if (len(data)):
+    match = migcpu_regex.search(migrations_data)
+    cpu_id = 'C' + match.group('cpu_id')
+    migrations_data = string.replace(migrations_data, cpu_id, "Call")
+    print "Plotting migrations [", migrations_data, "]..."
+    plot_migrations()
+
