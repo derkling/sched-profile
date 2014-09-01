@@ -517,6 +517,10 @@ def plot_latencies_per(latencies_data, view):
 
     # Setup output names
     latencies_figure = string.replace(latencies_data, '.dat', '_'+view.lower()+'.pdf')
+    latencies_report = string.replace(latencies_figure, '.pdf', '.report')
+    report_file = open(latencies_report, 'w')
+    report_file.write("# %24s | %25s | %25s |\n" % (view, 'Delay', 'Slice'))
+    report_file.write("# %24s | %12s %12s | %12s %12s |\n" % ('', 'Avg', 'Ci99', 'Avg', 'Ci99'))
 
     # Compute number of plots in that view
     plots_count = len(plot_data.keys())
@@ -578,6 +582,9 @@ def plot_latencies_per(latencies_data, view):
         # Add legend
         # p1.legend([l1], ['RQ Delay'], prop={'size':fsize})
 
+        # Report delay stats
+        report_file.write("%26s   %12.3f %12.3f" % (plot_key, avg, c99))
+
         ################################################################################
         # Plot Tasks Timeslice
         ################################################################################
@@ -603,6 +610,9 @@ def plot_latencies_per(latencies_data, view):
         # Add legend
         #p2.legend([l1], ['CPU Slice'], prop={'size':fsize})
 
+        # Report slice stats
+        report_file.write("   %12.3f %12.3f\n" % (avg, c99))
+
         plot_id += 2
 
         for item in (
@@ -611,6 +621,8 @@ def plot_latencies_per(latencies_data, view):
             p1.get_xticklabels() + p1.get_yticklabels() +
             p2.get_xticklabels() + p2.get_yticklabels()):
             item.set_fontsize(fsize)
+
+    report_file.close()
 
     # Plot the graph...
     if show_plot:
