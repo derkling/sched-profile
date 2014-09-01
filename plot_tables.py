@@ -663,6 +663,16 @@ metrics = {
  'Dst':       [ 'Dst CPU',              'Arrival CPU',                  6,      3],
 }
 mColumns = [c[2] for c in metrics.values()]
+def mName(m):
+    return metrics[m][0]
+def mDesc(m):
+    return metrics[m][1]
+def mData(t,m):
+    idx = metrics[m][3]
+    return [d[idx] for d in data[t]]
+def mTime(t):
+    idx = metrics['Time'][3]
+    return [d[idx] for d in data[t]]
 
 # The regex to match a CPU id within a migration filename, e.g.
 # fair_table_MIG-WLG-B3P2I1_C07_migrations.dat
