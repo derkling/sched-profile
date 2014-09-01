@@ -122,6 +122,72 @@ trace-cmd report $DATFILE 2>/dev/null | \
 	tr '|[]=' ' ' | ./parse_latencies.awk \
 	> $LTSFILE
 
+cat > parse_ctx_switches.awk <<EOF
+#!/usr/bin/awk -f
+# Jump comment lines
+/#/ {
+	next
+}
+# Parse latency events, which match 1:1 with sched_switch events
+{
+	timestamp = \$3
+	cpu_id = \$6
+
+	# Per CPU events
+	cpu_ctx_count[cpu_id]++
+	if (cpu_start[cpu_id] == 0)
+		cpu_start[cpu_id] = timestamp
+	cpu_end[cpu_id] = timestamp
+
+	# Overall events
+	trace_ctx_count++
+	if (trace_start == 0)
+		trace_start = timestamp
+	trace_end = timestamp
+}
+# Report computed per-CPU and overall rates
+END {
+
+	printf("# Trace start: %13.3f, end: %13.3f\\n", trace_start, trace_end)
+        printf("# Contex Switches Analysis\\n")
+        printf("# %5s %25s %13s %13s\\n",
+                "CPU", "Count", "Time[s]", "Rate[Ctx/s]")
+
+	if (trace_start == 0) {
+		printf("# No sched_switch data\\n")
+		exit 1
+	}
+
+	for (i in cpu_start) {
+		if (cpu_ctx_count[i] == 0)
+			continue
+
+		# Compute Ctx Switches timeframe and ratio
+		ctx_time = cpu_end[i] - cpu_start[i]
+		if (ctx_time == 0)
+			continue
+		ctx_ratio = cpu_ctx_count[i] / ctx_time
+
+		printf("%7d %25d %13.3f %13.1f\\n",
+		i, cpu_ctx_count[i], ctx_time, ctx_ratio)
+	}
+
+	ctx_time = trace_end - trace_start
+	ctx_ratio = trace_ctx_count / ctx_time
+
+	printf("%7d %25d %13.3f %13.1f\\n",
+		9999, trace_ctx_count, ctx_time, ctx_ratio)
+
+}
+EOF
+chmod a+x parse_ctx_switches.awk
+
+# Context switches are dumped in a single file
+# CPU ID = 9999 represents the average rate over all the CPUs
+CTXFILE=${TABFILE/.dat/_Call_ctxrate.dat}
+[[ -f $CTXFILE ]] || \
+cat $LTSFILE | ./parse_ctx_switches.awk > $CTXFILE
+
 fi # EVENTS == *_process_latency*
 
 ################################################################################
