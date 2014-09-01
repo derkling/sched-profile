@@ -9,6 +9,7 @@ import math
 import glob
 import sys
 import re
+import gc
 
 ################################################################################
 #  Configuration
@@ -635,6 +636,12 @@ def plot_latencies_per(latencies_data, view):
                 orientation = 'portrait',
                 format = 'pdf',
                 )
+
+    # Clean-up all the memory
+    fig.clf()
+    plt.close()
+    gc.collect()
+
 
 # Plotting tasks latencies
 for latencies_data in glob.glob('**_latencies.dat'):
