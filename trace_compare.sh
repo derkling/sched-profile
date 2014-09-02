@@ -503,12 +503,22 @@ ARCHIVE=\`awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' \$0\`
 mkdir \$DESTDIR || exit 1
 tail -n+\$ARCHIVE \$0 | tar xj -C \$DESTDIR
 cd \$DESTDIR
+
+# Generate the plotting script
+cat > plot_all.sh <<EOS
+#!/bin/bash
 for C in $CPULIST; do
-  echo "Dumping tables for CPU[\$C]..."
-  ./dump_tables.sh \$C
+  echo "Dumping tables for CPU[\\\$C]..."
+  ./dump_tables.sh \\\$C
 done
 echo "Plotting tables"
 ./plot_tables.py
+EOS
+chmod a+x plot_all.sh
+
+# plot all data
+./plot_all.sh
+
 cd ..
 xdg-open \$DESTDIR
 exit 0
