@@ -284,6 +284,12 @@ EOF
 test_sched() {
   RESULTS=$1 # The basename for experiment produced filenames
 
+  # Check for CPUs being specified
+  if [[ "x$CPUS" == x ]]; then
+    log_error "Error: CPUS env var must be defined"
+    exit -1
+  fi
+
   log_info "[TEST] Running [$TAG] on ${SCHED^^} scheduler..."
 
   if [[ $SCHED==iks ]]; then
@@ -359,7 +365,6 @@ test_fair() {
 
 test_iks() {
   CMD="$BENCH"
-  CPUS='0-7'
   EVENTS='cpu_migrate_finish sched_process_latency'
   RESULTS="iks_trace_$TAG"
   SCHED=iks
@@ -371,7 +376,6 @@ test_iks() {
 
 test_hmp() {
   CMD="$BENCH"
-  CPUS='0-7'
   # EVENTS='sched_wakeup sched_switch cpu_migrate_finish sched_task_runnable_ratio sched_process_fork sched_process_free'
   EVENTS='sched_process_latency'
   RESULTS="hmp_trace_$TAG"
